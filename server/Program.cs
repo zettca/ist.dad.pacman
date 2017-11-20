@@ -30,15 +30,30 @@ namespace server
         }
     }
 
+
+    // TODO: implement something better, or send Keys object through network ?
+    public struct PlayerKeyCommand
+    {
+        public int keyValue;
+        public bool isKeyDown;
+        public PlayerKeyCommand(int keyVal, bool isDown)
+        {
+            keyValue = keyVal;
+            isKeyDown = isDown;
+        }
+    }
+
     class ServerGameService : MarshalByRefObject, IGameServer
     {
         List<IGameClient> clients;
         List<string> messages;
+        List<PlayerKeyCommand> playerInputQueue;
 
         ServerGameService()
         {
             clients = new List<IGameClient>();
             messages = new List<string>();
+            playerInputQueue = new List<PlayerKeyCommand>();
         }
 
         public void RegisterPlayer(string port)
@@ -49,7 +64,14 @@ namespace server
 
             Console.WriteLine("New client bound to " + endpoint);
 
-            // return gameState ?
+            // TODO: return init gameState ?
+        }
+
+        public void SendKey(int keyValue, bool isKeyDown)
+        {
+            // TODO: find who the player is
+            playerInputQueue.Add(new PlayerKeyCommand(keyValue, isKeyDown));
+            Console.WriteLine("INPUT RECEIVED: " + keyValue.ToString() + " " + isKeyDown.ToString());
         }
     }
 }

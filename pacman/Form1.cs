@@ -17,8 +17,8 @@ namespace pacman
 {
     public partial class Form1 : Form
     {
-
         const string SERVER_ENDPOINT = "tcp://localhost:8086/OGPGameServer";
+        IGameServer server;
 
         // direction player is moving in. Only one will be true
         bool goup;
@@ -49,51 +49,65 @@ namespace pacman
             label2.Visible = false;
         }
 
-        private void keyisdown(object sender, KeyEventArgs e)
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Left)
+            switch (e.KeyCode)
             {
-                goleft = true;
-                pacman.Image = Properties.Resources.Left;
-            }
-            if (e.KeyCode == Keys.Right)
-            {
-                goright = true;
-                pacman.Image = Properties.Resources.Right;
-            }
-            if (e.KeyCode == Keys.Up)
-            {
-                goup = true;
-                pacman.Image = Properties.Resources.Up;
-            }
-            if (e.KeyCode == Keys.Down)
-            {
-                godown = true;
-                pacman.Image = Properties.Resources.down;
-            }
-            if (e.KeyCode == Keys.Enter)
-            {
-                tbMsg.Enabled = true; tbMsg.Focus();
+                case Keys.Left:
+                    if (goleft) break;
+                    goleft = true;
+                    pacman.Image = Properties.Resources.Left;
+                    server.SendKey(e.KeyValue, true);
+                    break;
+                case Keys.Right:
+                    if (goright) break;
+                    goright = true;
+                    pacman.Image = Properties.Resources.Right;
+                    server.SendKey(e.KeyValue, true);
+                    break;
+                case Keys.Up:
+                    if (goup) break;
+                    goup = true;
+                    pacman.Image = Properties.Resources.Up;
+                    server.SendKey(e.KeyValue, true);
+                    break;
+                case Keys.Down:
+                    if (godown) break;
+                    godown = true;
+                    pacman.Image = Properties.Resources.down;
+                    server.SendKey(e.KeyValue, true);
+                    break;
+                case Keys.Enter:
+                    tbMsg.Enabled = true;
+                    tbMsg.Focus();
+                    break;
+                default:
+                    break;
             }
         }
 
-        private void keyisup(object sender, KeyEventArgs e)
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Left)
+            switch (e.KeyCode)
             {
-                goleft = false;
-            }
-            if (e.KeyCode == Keys.Right)
-            {
-                goright = false;
-            }
-            if (e.KeyCode == Keys.Up)
-            {
-                goup = false;
-            }
-            if (e.KeyCode == Keys.Down)
-            {
-                godown = false;
+                case Keys.Left:
+                    goleft = false;
+                    server.SendKey(e.KeyValue, false);
+                    break;
+                case Keys.Right:
+                    goright = false;
+                    server.SendKey(e.KeyValue, false);
+                    break;
+                case Keys.Up:
+                    goup = false;
+                    server.SendKey(e.KeyValue, false);
+                    break;
+                case Keys.Down:
+                    godown = false;
+                    server.SendKey(e.KeyValue, false);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -203,10 +217,19 @@ namespace pacman
             TcpChannel channel = new TcpChannel(0);
             ChannelServices.RegisterChannel(channel, false);
 
-            IGameServer server = (IGameServer)Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT);
+            // Get port that was automatically generated
             int port = new Uri(((ChannelDataStore)channel.ChannelData).ChannelUris[0]).Port;
-            server.RegisterPlayer(port.ToString());
-            MessageBox.Show("PORT:" + port.ToString());
+
+            try
+            {
+                server = (IGameServer)Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT);
+                server.RegisterPlayer(port.ToString());
+            }
+            catch (Exception)
+            {
+                //throw;
+            }
+
         }
     }
 }
