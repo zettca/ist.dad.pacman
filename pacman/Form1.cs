@@ -1,14 +1,8 @@
 ﻿using services;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
@@ -46,7 +40,7 @@ namespace pacman
         public Form1()
         {
             InitializeComponent();
-            label2.Visible = false;
+            labelTitle.Visible = false;
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -113,7 +107,7 @@ namespace pacman
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            label1.Text = "Score: " + score;
+            labelScore.Text = "Score: " + score;
 
             //move player
             if (goleft)
@@ -163,8 +157,8 @@ namespace pacman
                     {
                         pacman.Left = 0;
                         pacman.Top = 25;
-                        label2.Text = "GAME OVER";
-                        label2.Visible = true;
+                        labelTitle.Text = "GAME OVER";
+                        labelTitle.Visible = true;
                         timer1.Stop();
                     }
                 }
@@ -179,8 +173,8 @@ namespace pacman
                         {
                             //pacman.Left = 0;
                             //pacman.Top = 25;
-                            label2.Text = "GAME WON!";
-                            label2.Visible = true;
+                            labelTitle.Text = "GAME WON!";
+                            labelTitle.Visible = true;
                             timer1.Stop();
                         }
                     }
@@ -208,7 +202,10 @@ namespace pacman
         {
             if (e.KeyCode == Keys.Enter)
             {
-                tbChat.Text += "\r\n" + tbMsg.Text; tbMsg.Clear(); tbMsg.Enabled = false; this.Focus();
+                server.SendMessage(tbMsg.Text);
+                tbMsg.Clear();
+                tbMsg.Enabled = false;
+                this.Focus();
             }
         }
 
@@ -223,13 +220,61 @@ namespace pacman
             try
             {
                 server = (IGameServer)Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT);
-                server.RegisterPlayer(port.ToString());
+                bool isConnected = server.RegisterPlayer(port);
+                if (!isConnected)
+                {
+                    MessageBox.Show("Server refused connection"); // TODO: handle with exception? ignore?
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                MessageBox.Show(ex.Message);
                 //throw;
             }
 
+        }
+
+        public void AddMessage(string msg)
+        {
+            this.tbChat.Text += msg + Environment.NewLine;
+        }
+
+        public void AddMessageList(List<string> msgs)
+        {
+            this.tbChat.Clear();
+            foreach (string msg in msgs)
+            {
+                this.tbChat.Text += msg + Environment.NewLine;
+            }
+        }
+    }
+
+    delegate void MessageHandler(string msg);
+    delegate void MessageListHandler(List<string> msgs);
+
+    public class PacmanClientService : MarshalByRefObject, IGameClient
+    {
+        public static Form1 form;
+
+        public PacmanClientService()
+        {
+
+        }
+
+        public void SendGameState(string state)
+        {
+            // TODO: update Form to match GameState
+            throw new NotImplementedException();
+        }
+
+        public void SendMessage(string msg)
+        {
+            form.Invoke(new MessageHandler(form.AddMessage), msg);
+        }
+
+        public void SendMessageHistory(List<string> msgs)
+        {
+            form.Invoke(new MessageListHandler(form.AddMessageList), msgs);
         }
     }
 }

@@ -8,12 +8,15 @@ namespace services
 {
     public interface IGameServer // Client >> Server
     {
-        void RegisterPlayer(string port);
+        bool RegisterPlayer(int port);
         void SendKey(int keyValue, bool isKeyDown);
+        void SendMessage(string msg);
     }
 
     public interface IGameClient // Server > Client
     {
-        void SendGameState(string state /* TODO: implement GameState something */);
+        void SendGameState(string state); // TODO: Marshall some GameState
+        void SendMessage(string msg);
+        void SendMessageHistory(List<string> msgs);
     }
 }
