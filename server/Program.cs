@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.Text;
-using System.Threading.Tasks;
 
 using services;
 using System.Threading;
+using System.Runtime.Remoting.Channels;
 
 namespace server
 {
@@ -22,6 +20,7 @@ namespace server
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
 
             TcpChannel channel = new TcpChannel(8086);
+            ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(ServerGameService),
                 "OGPGameServer",
@@ -34,10 +33,12 @@ namespace server
     // TODO: implement something better, or send Keys object through network ?
     public struct PlayerAction
     {
+        public string playerId;
         public int keyValue;
         public bool isKeyDown;
-        public PlayerAction(int keyVal, bool isDown)
+        public PlayerAction(string pid, int keyVal, bool isDown)
         {
+            playerId = pid;
             keyValue = keyVal;
             isKeyDown = isDown;
         }
@@ -48,7 +49,6 @@ namespace server
         List<IGameClient> clients;
         List<string> messages;
         List<PlayerAction> playerInputQueue;
-        GameStateMachine stateMachine;
 
         // TODO: get configs from stdin?
         int maxPlayers = 5, msPerRound = 1000;
@@ -75,7 +75,6 @@ namespace server
             IGameClient client = (IGameClient)Activator.GetObject(typeof(IGameClient), endpoint);
             this.clients.Add(client);
 
-            //client.SendMessageHistory(this.messages);
             //client.SendGameState(null); // TODO: implement actual Game State
 
             Console.WriteLine("New client bound to " + endpoint);
@@ -102,7 +101,8 @@ namespace server
         public void SendKey(int keyValue, bool isKeyDown)
         {
             // TODO: find who the player is
-            playerInputQueue.Add(new PlayerAction(keyValue, isKeyDown));
+            string playerId = "player12";
+            playerInputQueue.Add(new PlayerAction(playerId, keyValue, isKeyDown));
             Console.WriteLine("INPUT RECEIVED: " + keyValue.ToString() + " " + isKeyDown.ToString());
         }
 
@@ -118,7 +118,12 @@ namespace server
             }
         }
 
-        private static void BroadcastMessage(List<IGameClient> clients, string msg)
+        public List<string> GetMessageHistory()
+        {
+            return this.messages;
+        }
+
+        private void BroadcastMessage(List<IGameClient> clients, string msg)
         {
             foreach (IGameClient client in clients)
             {

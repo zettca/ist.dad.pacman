@@ -1,6 +1,7 @@
 ﻿using services;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Windows.Forms;
@@ -9,7 +10,7 @@ using System.Windows.Forms;
 
 namespace pacman
 {
-    public partial class Form1 : Form
+    public partial class FormPacman : Form
     {
         const string SERVER_ENDPOINT = "tcp://localhost:8086/OGPGameServer";
         IGameServer server;
@@ -37,7 +38,7 @@ namespace pacman
         int ghost3x = 5;
         int ghost3y = 5;
 
-        public Form1()
+        public FormPacman()
         {
             InitializeComponent();
             labelTitle.Visible = false;
@@ -51,33 +52,31 @@ namespace pacman
                     if (goleft) break;
                     goleft = true;
                     pacman.Image = Properties.Resources.Left;
-                    server.SendKey(e.KeyValue, true);
                     break;
                 case Keys.Right:
                     if (goright) break;
                     goright = true;
                     pacman.Image = Properties.Resources.Right;
-                    server.SendKey(e.KeyValue, true);
                     break;
                 case Keys.Up:
                     if (goup) break;
                     goup = true;
                     pacman.Image = Properties.Resources.Up;
-                    server.SendKey(e.KeyValue, true);
                     break;
                 case Keys.Down:
                     if (godown) break;
                     godown = true;
                     pacman.Image = Properties.Resources.down;
-                    server.SendKey(e.KeyValue, true);
                     break;
                 case Keys.Enter:
                     tbMsg.Enabled = true;
                     tbMsg.Focus();
-                    break;
+                    return;
                 default:
-                    break;
+                    return;
             }
+
+            server.SendKey(e.KeyValue, true);
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -86,23 +85,21 @@ namespace pacman
             {
                 case Keys.Left:
                     goleft = false;
-                    server.SendKey(e.KeyValue, false);
                     break;
                 case Keys.Right:
                     goright = false;
-                    server.SendKey(e.KeyValue, false);
                     break;
                 case Keys.Up:
                     goup = false;
-                    server.SendKey(e.KeyValue, false);
                     break;
                 case Keys.Down:
                     godown = false;
-                    server.SendKey(e.KeyValue, false);
                     break;
                 default:
-                    break;
+                    return;
             }
+
+            server.SendKey(e.KeyValue, false);
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -214,22 +211,20 @@ namespace pacman
             TcpChannel channel = new TcpChannel(0);
             ChannelServices.RegisterChannel(channel, false);
 
+            PacmanClientService service = new PacmanClientService();
+            RemotingServices.Marshal(service, "GameClient",
+                typeof(PacmanClientService));
+
             // Get port that was automatically generated
             int port = new Uri(((ChannelDataStore)channel.ChannelData).ChannelUris[0]).Port;
 
-            try
+            PacmanClientService.form = this;
+            server = Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT) as IGameServer;
+            bool isConnected = server.RegisterPlayer(port);
+            this.AddMessageList(server.GetMessageHistory());
+            if (!isConnected)
             {
-                server = (IGameServer)Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT);
-                bool isConnected = server.RegisterPlayer(port);
-                if (!isConnected)
-                {
-                    MessageBox.Show("Server refused connection"); // TODO: handle with exception? ignore?
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-                //throw;
+                MessageBox.Show("Server refused connection"); // TODO: handle with exception? ignore?
             }
 
         }
@@ -254,27 +249,22 @@ namespace pacman
 
     public class PacmanClientService : MarshalByRefObject, IGameClient
     {
-        public static Form1 form;
+        public static FormPacman form;
 
         public PacmanClientService()
         {
 
         }
 
-        public void SendGameState(string state)
+        public void SendGameState(object state)
         {
             // TODO: update Form to match GameState
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public void SendMessage(string msg)
         {
             form.Invoke(new MessageHandler(form.AddMessage), msg);
-        }
-
-        public void SendMessageHistory(List<string> msgs)
-        {
-            form.Invoke(new MessageListHandler(form.AddMessageList), msgs);
         }
     }
 }

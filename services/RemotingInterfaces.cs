@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace services
 {
@@ -11,12 +7,12 @@ namespace services
         bool RegisterPlayer(int port);
         void SendKey(int keyValue, bool isKeyDown);
         void SendMessage(string msg);
+        List<string> GetMessageHistory();
     }
 
     public interface IGameClient // Server > Client
     {
-        void SendGameState(string state); // TODO: Marshall some GameState
+        void SendGameState(object state); // TODO: Marshall some GameState
         void SendMessage(string msg);
-        void SendMessageHistory(List<string> msgs);
     }
 }
