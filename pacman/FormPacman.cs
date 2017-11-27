@@ -224,7 +224,7 @@ namespace pacman
             this.AddMessageList(server.GetMessageHistory());
             if (!isConnected)
             {
-                MessageBox.Show("Server refused connection"); // TODO: handle with exception? ignore?
+                MessageBox.Show("Server refused connection. Maybe room is already full?"); // TODO: handle with exception? ignore?
             }
 
         }
@@ -256,7 +256,7 @@ namespace pacman
 
         }
 
-        public void SendGameState(object state)
+        public void SendGameState(IGameState state)
         {
             // TODO: update Form to match GameState
             //throw new NotImplementedException();

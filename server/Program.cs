@@ -30,28 +30,15 @@ namespace server
         }
     }
 
-    // TODO: implement something better, or send Keys object through network ?
-    public struct PlayerAction
-    {
-        public string playerId;
-        public int keyValue;
-        public bool isKeyDown;
-        public PlayerAction(string pid, int keyVal, bool isDown)
-        {
-            playerId = pid;
-            keyValue = keyVal;
-            isKeyDown = isDown;
-        }
-    }
-
     class ServerGameService : MarshalByRefObject, IGameServer
     {
         List<IGameClient> clients;
         List<string> messages;
         List<PlayerAction> playerInputQueue;
+        StateMachine gameInstance;
 
         // TODO: get configs from stdin?
-        int maxPlayers = 5, msPerRound = 1000;
+        int maxPlayers = 3, msPerRound = 1000;
         string gameName = "pacman";
 
         ServerGameService()
@@ -59,17 +46,32 @@ namespace server
             this.clients = new List<IGameClient>();
             this.messages = new List<string>();
             this.playerInputQueue = new List<PlayerAction>();
+        }
 
-            if (this.gameName == "pacman".ToLower())
+        private void StartGame(string gameId)
+        {
+            IGameState initialState;
+            switch (gameId)
             {
-                //this.stateMachine = new PacmanStateMachine(); // TODO: some initial state
+                case "pacman":
+                    initialState = new PacmanGameState(3, 5, 5, 300, 300);
+                    break;
+                default:
+                    initialState = null;
+                    Console.WriteLine("Unknown game...");
+                    break;
             }
+            gameInstance = new StateMachine(initialState);
+
+            ThreadStart ts = new ThreadStart(GameInstanceThread);
+            Thread thread = new Thread(ts);
+            thread.Start();
         }
 
         public bool RegisterPlayer(int port)
         {
             // TODO: properly refuse connection with exceptions? bool is fine tho
-            if (this.clients.Count == this.maxPlayers) return false;
+            if (this.clients.Count > this.maxPlayers) return false;
 
             string endpoint = "tcp://localhost:" + port.ToString() + "/GameClient";
             IGameClient client = (IGameClient)Activator.GetObject(typeof(IGameClient), endpoint);
@@ -81,9 +83,7 @@ namespace server
 
             if (this.clients.Count == this.maxPlayers)
             {
-                ThreadStart ts = new ThreadStart(this.GameInstanceThread);
-                Thread thread = new Thread(ts);
-                thread.Start();
+                StartGame(this.gameName.ToLower());
             }
 
             return true;
@@ -94,7 +94,24 @@ namespace server
             while (true)
             {
                 Console.WriteLine("Waited " + this.msPerRound.ToString());
+                gameInstance.ApplyTransitions(playerInputQueue);
+
+                // TODO: send gameState to players
+
+                ThreadStart ts = new ThreadStart(SendGameState);
+                Thread thread = new Thread(ts);
+                thread.Start();
+
+
                 Thread.Sleep(this.msPerRound);
+            }
+        }
+
+        private void SendGameState()
+        {
+            foreach (IGameClient client in clients)
+            {
+                client.SendGameState(this.gameInstance.CurrentState);
             }
         }
 

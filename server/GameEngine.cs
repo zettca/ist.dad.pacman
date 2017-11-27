@@ -1,14 +1,10 @@
-﻿using System;
+﻿using services;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
 namespace server
 {
-    public interface IGameState
-    {
-        IGameState ApplyAction(PlayerAction action);
-    }
-
     public class PacmanGameState : MarshalByRefObject, IGameState
     {
         private List<PlayerData> playerData;
@@ -19,14 +15,26 @@ namespace server
         public List<EntityData> GhostData { get => ghostData; }
         public List<EntityData> FoodData { get => foodData; }
 
-        public IGameState ApplyActions(List<PlayerAction> actions)
+        private Vector2 NewRandomVector(int maxX, int maxY)
         {
-            foreach (PlayerAction action in actions)
-            {
-                this.ApplyAction(action);
-            }
+            Random rnd = new Random();
+            return new Vector2(rnd.Next(maxX), rnd.Next(maxY));
+        }
 
-            return this;
+        public PacmanGameState(int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
+        {
+            playerData = new List<PlayerData>();
+            ghostData = new List<EntityData>();
+            foodData = new List<EntityData>();
+
+            for (int i = 0; i < numPlayers; i++)
+                playerData.Add(new PlayerData("pid" + i.ToString(), NewRandomVector(windowX, windowY)));
+
+            for (int i = 0; i < numGhosts; i++)
+                ghostData.Add(new EntityData(NewRandomVector(windowX, windowY)));
+
+            for (int i = 0; i < numFoods; i++)
+                foodData.Add(new EntityData(NewRandomVector(windowX, windowY)));
         }
 
         public IGameState ApplyAction(PlayerAction action)
@@ -101,9 +109,9 @@ namespace server
         public int Score { get => score; set => score = value; }
         public Vector2 Direction { get => direction; set => direction = value; }
 
-        public PlayerData(string pid, int x, int y) : this(pid, x, y, 0, true)
-        {
-        }
+        public PlayerData(string pid, Vector2 pos) : this(pid, (int)pos.X, (int)pos.Y) { }
+
+        public PlayerData(string pid, int x, int y) : this(pid, x, y, 0, true) { }
 
         public PlayerData(string pid, int x, int y, int score, bool alive) : base(x, y, alive)
         {
@@ -121,9 +129,9 @@ namespace server
         public Vector2 Position { get => position; set => position = value; }
         public bool Alive { get => alive; set => alive = value; }
 
-        public EntityData(int x, int y) : this(x, y, true)
-        {
-        }
+        public EntityData(Vector2 pos) : this((int)pos.X, (int)pos.Y) { }
+
+        public EntityData(int x, int y) : this(x, y, true) { }
 
         public EntityData(int x, int y, bool alive)
         {
@@ -143,9 +151,19 @@ namespace server
             this.currentState = initialState;
         }
 
-        public IGameState TransitionFunction(PlayerAction action)
+        public IGameState ApplyTransition(PlayerAction action)
         {
             return this.CurrentState.ApplyAction(action);
+        }
+
+        public IGameState ApplyTransitions(List<PlayerAction> actions)
+        {
+            foreach (PlayerAction action in actions)
+            {
+                this.CurrentState.ApplyAction(action);
+            }
+
+            return this.CurrentState;
         }
 
     }
