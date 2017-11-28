@@ -1,11 +1,26 @@
 ﻿using services;
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 
 namespace server
 {
-    public class PacmanGameState : MarshalByRefObject, IGameState
+    [Serializable]
+    public struct Vec2 // Integer vector2
+    {
+        private int x, y;
+
+        public Vec2(int x, int y) : this()
+        {
+            X = x;
+            Y = y;
+        }
+
+        public int X { get => x; set => x = value; }
+        public int Y { get => y; set => y = value; }
+    }
+
+    [Serializable]
+    public class PacmanGameState : IGameState
     {
         private List<PlayerData> playerData;
         private List<EntityData> ghostData;
@@ -15,10 +30,10 @@ namespace server
         public List<EntityData> GhostData { get => ghostData; }
         public List<EntityData> FoodData { get => foodData; }
 
-        private Vector2 NewRandomVector(int maxX, int maxY)
+        private Vec2 NewRandomVector(int maxX, int maxY)
         {
             Random rnd = new Random();
-            return new Vector2(rnd.Next(maxX), rnd.Next(maxY));
+            return new Vec2(rnd.Next(maxX), rnd.Next(maxY));
         }
 
         public PacmanGameState(int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
@@ -60,29 +75,29 @@ namespace server
             return this;
         }
 
-        private Vector2 UpdateDirection(PlayerData player, PlayerAction action)
+        private Vec2 UpdateDirection(PlayerData player, PlayerAction action)
         {
             switch (action.keyValue)
             {
                 case 37: // left
-                    return new Vector2((action.isKeyDown) ? -1 : 0, player.Direction.Y);
+                    return new Vec2((action.isKeyDown) ? -1 : 0, player.Direction.Y);
                 case 38: // up
-                    return new Vector2(player.Direction.X, (action.isKeyDown) ? -1 : 0);
+                    return new Vec2(player.Direction.X, (action.isKeyDown) ? -1 : 0);
                 case 39: // right
-                    return new Vector2((action.isKeyDown) ? 1 : 0, player.Direction.Y);
+                    return new Vec2((action.isKeyDown) ? 1 : 0, player.Direction.Y);
                 case 40: // down
-                    return new Vector2(player.Direction.X, (action.isKeyDown) ? 1 : 0);
+                    return new Vec2(player.Direction.X, (action.isKeyDown) ? 1 : 0);
                 default:
                     return player.Direction;
             }
         }
 
-        private Vector2 UpdatePosition(PlayerData player, PlayerAction action)
+        private Vec2 UpdatePosition(PlayerData player, PlayerAction action)
         {
-            int mul = 2;
-            return new Vector2(
-                player.Position.X + player.Direction.X * mul,
-                player.Position.Y + player.Direction.Y * mul); ;
+            const int MUL = 2;
+            return new Vec2(
+                player.Position.X + player.Direction.X * MUL,
+                player.Position.Y + player.Direction.Y * MUL);
         }
 
         private int UpdateScore(PlayerData player, PlayerAction action)
@@ -99,17 +114,18 @@ namespace server
         }
     }
 
+    [Serializable]
     public class PlayerData : EntityData
     {
         private string pid;
         private int score;
-        private Vector2 direction;
+        private Vec2 direction;
 
         public string Pid { get => pid; set => pid = value; }
         public int Score { get => score; set => score = value; }
-        public Vector2 Direction { get => direction; set => direction = value; }
+        internal Vec2 Direction { get => direction; set => direction = value; }
 
-        public PlayerData(string pid, Vector2 pos) : this(pid, (int)pos.X, (int)pos.Y) { }
+        public PlayerData(string pid, Vec2 pos) : this(pid, pos.X, pos.Y) { }
 
         public PlayerData(string pid, int x, int y) : this(pid, x, y, 0, true) { }
 
@@ -117,25 +133,26 @@ namespace server
         {
             Pid = pid;
             Score = score;
-            Direction = new Vector2(0, 0);
+            Direction = new Vec2(0, 0);
         }
     }
 
+    [Serializable]
     public class EntityData
     {
-        private Vector2 position;
         private bool alive;
+        private Vec2 position;
 
-        public Vector2 Position { get => position; set => position = value; }
         public bool Alive { get => alive; set => alive = value; }
+        internal Vec2 Position { get => position; set => position = value; }
 
-        public EntityData(Vector2 pos) : this((int)pos.X, (int)pos.Y) { }
+        public EntityData(Vec2 pos) : this(pos.X, pos.Y) { }
 
         public EntityData(int x, int y) : this(x, y, true) { }
 
         public EntityData(int x, int y, bool alive)
         {
-            Position = new Vector2(x, y);
+            Position = new Vec2(x, y);
             Alive = alive;
         }
     }
@@ -148,22 +165,22 @@ namespace server
 
         public StateMachine(IGameState initialState)
         {
-            this.currentState = initialState;
+            currentState = initialState;
         }
 
         public IGameState ApplyTransition(PlayerAction action)
         {
-            return this.CurrentState.ApplyAction(action);
+            return CurrentState.ApplyAction(action);
         }
 
         public IGameState ApplyTransitions(List<PlayerAction> actions)
         {
             foreach (PlayerAction action in actions)
             {
-                this.CurrentState.ApplyAction(action);
+                CurrentState.ApplyAction(action);
             }
 
-            return this.CurrentState;
+            return CurrentState;
         }
 
     }

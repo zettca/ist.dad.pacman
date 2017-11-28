@@ -11,6 +11,9 @@ namespace server
 {
     class Program
     {
+        public static int port, numPlayers;
+        public static string gameName;
+
         [STAThread]
         static void Main(string[] args)
         {
@@ -19,14 +22,28 @@ namespace server
             Console.WriteLine("║             DAD 2017-2018, IST - Group 4           ║");
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
 
-            TcpChannel channel = new TcpChannel(8086);
+            try
+            {
+                port = Int32.Parse(args[0]);
+                numPlayers = Int32.Parse(args[1]);
+                gameName = args[2];
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine("Malformed arguments. Press any key to exit");
+                Console.ReadKey();
+                Environment.Exit(-1);
+            }
+
+            TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(ServerGameService),
                 "OGPGameServer",
                 WellKnownObjectMode.Singleton);
 
-            Console.ReadLine();
+            Console.ReadKey();
         }
     }
 
@@ -37,15 +54,11 @@ namespace server
         List<PlayerAction> playerInputQueue;
         StateMachine gameInstance;
 
-        // TODO: get configs from stdin?
-        int maxPlayers = 3, msPerRound = 1000;
-        string gameName = "pacman";
-
         ServerGameService()
         {
-            this.clients = new List<IGameClient>();
-            this.messages = new List<string>();
-            this.playerInputQueue = new List<PlayerAction>();
+            clients = new List<IGameClient>();
+            messages = new List<string>();
+            playerInputQueue = new List<PlayerAction>();
         }
 
         private void StartGame(string gameId)
@@ -71,19 +84,19 @@ namespace server
         public bool RegisterPlayer(int port)
         {
             // TODO: properly refuse connection with exceptions? bool is fine tho
-            if (this.clients.Count > this.maxPlayers) return false;
+            if (clients.Count > Program.numPlayers) return false;
 
             string endpoint = "tcp://localhost:" + port.ToString() + "/GameClient";
             IGameClient client = (IGameClient)Activator.GetObject(typeof(IGameClient), endpoint);
-            this.clients.Add(client);
+            clients.Add(client);
 
             //client.SendGameState(null); // TODO: implement actual Game State
 
             Console.WriteLine("New client bound to " + endpoint);
 
-            if (this.clients.Count == this.maxPlayers)
+            if (clients.Count == Program.numPlayers)
             {
-                StartGame(this.gameName.ToLower());
+                StartGame(Program.gameName);
             }
 
             return true;
@@ -91,9 +104,10 @@ namespace server
 
         private void GameInstanceThread()
         {
+            const int MS_PER_ROUND = 1000;
             while (true)
             {
-                Console.WriteLine("Waited " + this.msPerRound.ToString());
+                Console.WriteLine("Waited " + MS_PER_ROUND.ToString());
                 gameInstance.ApplyTransitions(playerInputQueue);
 
                 // TODO: send gameState to players
@@ -103,15 +117,17 @@ namespace server
                 thread.Start();
 
 
-                Thread.Sleep(this.msPerRound);
+                Thread.Sleep(MS_PER_ROUND);
             }
         }
 
         private void SendGameState()
         {
+            IGameState gameState = gameInstance.CurrentState;
             foreach (IGameClient client in clients)
             {
-                client.SendGameState(this.gameInstance.CurrentState);
+                // TODO: properly serialize GameState
+                //client.SendGameState(gameState);
             }
         }
 
@@ -128,16 +144,16 @@ namespace server
             if (msg.Trim().Length > 0)
             {
                 Console.WriteLine("Message received: " + msg);
-                this.messages.Add(msg);
+                messages.Add(msg);
 
-                Thread thread = new Thread(() => BroadcastMessage(this.clients, msg));
+                Thread thread = new Thread(() => BroadcastMessage(clients, msg));
                 thread.Start();
             }
         }
 
         public List<string> GetMessageHistory()
         {
-            return this.messages;
+            return messages;
         }
 
         private void BroadcastMessage(List<IGameClient> clients, string msg)
