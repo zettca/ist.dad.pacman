@@ -31,7 +31,8 @@ namespace server
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                Console.WriteLine("Malformed arguments. Press any key to exit");
+                Console.WriteLine("Expected arguments: <port> <numPlayers> <gameName>");
+                Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
                 Environment.Exit(-1);
             }
