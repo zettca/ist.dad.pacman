@@ -23,7 +23,7 @@ namespace services
 
     public interface IGameServer // Client >> Server
     {
-        bool RegisterPlayer(int port);
+        bool RegisterPlayer(int port, string username);
         void SendKey(int keyValue, bool isKeyDown);
         void SendMessage(string msg);
         List<string> GetMessageHistory();

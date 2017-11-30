@@ -9,10 +9,14 @@ namespace pacman
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main() {
+        static void Main(string[] args) {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormPacman());
+
+            Random rand = new Random();
+            string username = (args.Length > 0) ? args[0] : rand.Next(9999).ToString();
+            Application.Run(new FormPacman(username));
         }
+
     }
 }

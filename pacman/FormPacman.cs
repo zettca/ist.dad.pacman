@@ -13,6 +13,7 @@ namespace pacman
     public partial class FormPacman : Form
     {
         const string SERVER_ENDPOINT = "tcp://localhost:8086/OGPGameServer";
+        string username;
         IGameServer server;
 
         // direction player is moving in. Only one will be true
@@ -42,6 +43,11 @@ namespace pacman
         {
             InitializeComponent();
             labelTitle.Visible = false;
+        }
+
+        public FormPacman(string username) : this()
+        {
+            this.username = username;
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -220,7 +226,7 @@ namespace pacman
 
             PacmanClientService.form = this;
             server = Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT) as IGameServer;
-            bool isConnected = server.RegisterPlayer(port);
+            bool isConnected = server.RegisterPlayer(port, username);
             this.AddMessageList(server.GetMessageHistory());
             if (!isConnected)
             {
@@ -242,8 +248,22 @@ namespace pacman
                 this.tbChat.Text += msg + Environment.NewLine;
             }
         }
+
+        public void DrawGame(PacmanGameState gameState)
+        {
+            foreach (PlayerData player in gameState.PlayerData)
+            {
+                if (player.Pid == username)
+                {
+                    labelScore.Text = player.Score.ToString();
+                    labelTitle.Text = String.Format("({0}, {1})", player.Position.X, player.Position.Y);
+                }
+            }
+            
+        }
     }
 
+    delegate void GameHandler(PacmanGameState state);
     delegate void MessageHandler(string msg);
     delegate void MessageListHandler(List<string> msgs);
 
@@ -258,8 +278,9 @@ namespace pacman
 
         public void SendGameState(IGameState state)
         {
-            // TODO: update Form to match GameState
-            //throw new NotImplementedException();
+            // TODO: handle conversion and error catching
+            PacmanGameState gameState = (PacmanGameState)state;
+            form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
         }
 
         public void SendMessage(string msg)

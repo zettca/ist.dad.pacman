@@ -1,8 +1,8 @@
-﻿using services;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace server
+namespace services
 {
     [Serializable]
     public struct Vec2 // Integer vector2
@@ -17,11 +17,18 @@ namespace server
 
         public int X { get => x; set => x = value; }
         public int Y { get => y; set => y = value; }
+
+        public override string ToString()
+        {
+            return String.Format("({0},{1})", x, y);
+        }
     }
 
     [Serializable]
     public class PacmanGameState : IGameState
     {
+        const int SPEED = 4, DIST = 20;
+
         private List<PlayerData> playerData;
         private List<EntityData> ghostData;
         private List<EntityData> foodData;
@@ -36,14 +43,14 @@ namespace server
             return new Vec2(rnd.Next(maxX), rnd.Next(maxY));
         }
 
-        public PacmanGameState(int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
+        public PacmanGameState(List<string> playerNames, int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
         {
             playerData = new List<PlayerData>();
             ghostData = new List<EntityData>();
             foodData = new List<EntityData>();
 
             for (int i = 0; i < numPlayers; i++)
-                playerData.Add(new PlayerData("pid" + i.ToString(), NewRandomVector(windowX, windowY)));
+                playerData.Add(new PlayerData(playerNames[i], new Vec2(10, 10 + DIST * i)));
 
             for (int i = 0; i < numGhosts; i++)
                 ghostData.Add(new EntityData(NewRandomVector(windowX, windowY)));
@@ -52,65 +59,74 @@ namespace server
                 foodData.Add(new EntityData(NewRandomVector(windowX, windowY)));
         }
 
+        public PlayerData GetPlayer(string pid)
+        {
+            foreach (var player in this.playerData)
+            {
+                if (player.Pid == pid) return player;
+            }
+
+            return null;
+        }
+
         public IGameState ApplyAction(PlayerAction action)
         {
-            PlayerData player = null;
-            foreach (var pl in this.playerData)
-            {
-                if (action.playerId == pl.Pid)
-                {
-                    player = pl;
-                    break;
-                }
-            }
+            PlayerData player = GetPlayer(action.playerId);
 
             if (player == null) return this; // TODO: handle better
 
-            player.Direction = this.UpdateDirection(player, action);
-            player.Position = this.UpdatePosition(player, action);
+            player.Direction = this.UpdateDirection(ref player, action);
+            player.Position = this.UpdatePosition(ref player, action);
             // TODO: check invalid position here instead?
-            player.Score = this.UpdateScore(player, action);
-            player.Alive = this.UpdateAlive(player, action);
+            player.Score = this.UpdateScore(ref player, action);
+            player.Alive = this.UpdateAlive(ref player, action);
 
             return this;
         }
 
-        private Vec2 UpdateDirection(PlayerData player, PlayerAction action)
+        private Vec2 UpdateDirection(ref PlayerData player, PlayerAction action)
         {
+            int MULT = (action.isKeyDown) ? 1 : 0;
             switch (action.keyValue)
             {
                 case 37: // left
-                    return new Vec2((action.isKeyDown) ? -1 : 0, player.Direction.Y);
+                    return new Vec2(-1 * MULT, player.Direction.Y);
                 case 38: // up
-                    return new Vec2(player.Direction.X, (action.isKeyDown) ? -1 : 0);
+                    return new Vec2(player.Direction.X, -1 * MULT);
                 case 39: // right
-                    return new Vec2((action.isKeyDown) ? 1 : 0, player.Direction.Y);
+                    return new Vec2(1 * MULT, player.Direction.Y);
                 case 40: // down
-                    return new Vec2(player.Direction.X, (action.isKeyDown) ? 1 : 0);
+                    return new Vec2(player.Direction.X, 1 * MULT);
                 default:
                     return player.Direction;
             }
         }
 
-        private Vec2 UpdatePosition(PlayerData player, PlayerAction action)
+        private Vec2 UpdatePosition(ref PlayerData player, PlayerAction action)
         {
-            const int MUL = 2;
             return new Vec2(
-                player.Position.X + player.Direction.X * MUL,
-                player.Position.Y + player.Direction.Y * MUL);
+                player.Position.X + player.Direction.X * SPEED,
+                player.Position.Y + player.Direction.Y * SPEED);
         }
 
-        private int UpdateScore(PlayerData player, PlayerAction action)
+        private int UpdateScore(ref PlayerData player, PlayerAction action)
         {
-
             // TODO: check collision with food
-            throw new NotImplementedException();
+            return player.Score;
         }
 
-        private bool UpdateAlive(PlayerData player, PlayerAction action)
+        private bool UpdateAlive(ref PlayerData player, PlayerAction action)
         {
             // TODO: check collision with ghosts
-            throw new NotImplementedException();
+            return player.Alive;
+        }
+
+        public override string ToString()
+        {
+            string names = String.Join(" ", PlayerData.Select(player => player.Pid));
+            string positions = String.Join(" ", PlayerData.Select(player => player.Position.ToString()));
+            string scores = String.Join(" ", PlayerData.Select(player => player.Score.ToString()));
+            return String.Join(Environment.NewLine, names, positions, scores);
         }
     }
 
@@ -144,7 +160,7 @@ namespace server
         private Vec2 position;
 
         public bool Alive { get => alive; set => alive = value; }
-        internal Vec2 Position { get => position; set => position = value; }
+        public Vec2 Position { get => position; set => position = value; }
 
         public EntityData(Vec2 pos) : this(pos.X, pos.Y) { }
 
