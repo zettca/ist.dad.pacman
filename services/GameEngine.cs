@@ -130,8 +130,8 @@ namespace services
 
         private bool DoBoxesIntersect(EntityData e1, EntityData e2)
         {
-            return ((e1.Position.X - e2.Position.X) * 2 < (e1.Size.X + e2.Size.X)) &&
-                   ((e1.Position.Y - e2.Position.Y) * 2 < (e1.Size.Y + e2.Size.Y));
+            return (Math.Abs(e1.Position.X - e2.Position.X) * 2 < (e1.Size.X + e2.Size.X)) &&
+                   (Math.Abs(e1.Position.Y - e2.Position.Y) * 2 < (e1.Size.Y + e2.Size.Y));
         }
 
         private void ProcessCollision(PlayerData player)
