@@ -947,7 +947,7 @@
             this.tbMsg.Enabled = false;
             this.tbMsg.Location = new System.Drawing.Point(367, 315);
             this.tbMsg.Name = "tbMsg";
-            this.tbMsg.Size = new System.Drawing.Size(100, 20);
+            this.tbMsg.Size = new System.Drawing.Size(205, 20);
             this.tbMsg.TabIndex = 143;
             this.tbMsg.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbMsg_KeyDown);
             // 
@@ -957,15 +957,15 @@
             this.tbChat.Location = new System.Drawing.Point(367, 40);
             this.tbChat.Multiline = true;
             this.tbChat.Name = "tbChat";
-            this.tbChat.Size = new System.Drawing.Size(100, 255);
+            this.tbChat.Size = new System.Drawing.Size(205, 269);
             this.tbChat.TabIndex = 144;
             // 
-            // Form1
+            // FormPacman
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.ClientSize = new System.Drawing.Size(479, 344);
+            this.ClientSize = new System.Drawing.Size(584, 344);
             this.Controls.Add(this.tbChat);
             this.Controls.Add(this.tbMsg);
             this.Controls.Add(this.pictureBox56);
@@ -1038,7 +1038,7 @@
             this.Controls.Add(this.pictureBox3);
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.pictureBox1);
-            this.Name = "Form1";
+            this.Name = "FormPacman";
             this.Text = "DADman";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);

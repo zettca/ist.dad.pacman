@@ -39,15 +39,12 @@ namespace pacman
         int ghost3x = 5;
         int ghost3y = 5;
 
-        public FormPacman()
+        public FormPacman(string username)
         {
             InitializeComponent();
             labelTitle.Visible = false;
-        }
-
-        public FormPacman(string username) : this()
-        {
             this.username = username;
+            this.Text = username + " - Pacman Client";
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
