@@ -120,6 +120,7 @@ namespace pacman
             if (guid == Guid.Empty)
             {
                 MessageBox.Show("Server refused connection. Maybe room is already full?"); // TODO: handle with exception? ignore?
+                this.Close();
             }
 
         }
