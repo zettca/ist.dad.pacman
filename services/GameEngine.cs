@@ -53,7 +53,10 @@ namespace services
             this.windowY = windowY;
 
             for (int i = 0; i < numPlayers; i++)
-                playerData.Add(new PlayerData(playerIDs[i], new Vec2(10, 10 + SIZE * i), new Vec2(SIZE, SIZE)));
+                playerData.Add(
+                    new PlayerData(playerIDs[i],
+                        new Vec2(8, 40 * (i + 1)),
+                        new Vec2(SIZE, SIZE)));
 
             for (int i = 0; i < numGhosts; i++)
                 ghostData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(SIZE, SIZE)));
