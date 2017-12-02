@@ -203,7 +203,7 @@ namespace services
 
         public EntityData(Vec2 pos, Vec2 size) : this(pos, size, true) { }
 
-        public EntityData(Vec2 pos, Vec2 size, bool alive) : this(new Guid(), pos, size, alive) { }
+        public EntityData(Vec2 pos, Vec2 size, bool alive) : this(Guid.NewGuid(), pos, size, alive) { }
 
         public EntityData(Guid guid, Vec2 pos, Vec2 size, bool alive)
         {
