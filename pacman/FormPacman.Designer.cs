@@ -27,27 +27,29 @@
             this.labelTitle = new System.Windows.Forms.Label();
             this.tbMsg = new System.Windows.Forms.TextBox();
             this.tbChat = new System.Windows.Forms.TextBox();
+            this.labelForScore = new System.Windows.Forms.Label();
+            this.labelForPos = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // labelScore
             // 
             this.labelScore.AutoSize = true;
             this.labelScore.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelScore.Location = new System.Drawing.Point(363, 17);
+            this.labelScore.Location = new System.Drawing.Point(363, 33);
             this.labelScore.Name = "labelScore";
-            this.labelScore.Size = new System.Drawing.Size(57, 20);
+            this.labelScore.Size = new System.Drawing.Size(72, 20);
             this.labelScore.TabIndex = 71;
-            this.labelScore.Text = "label1";
+            this.labelScore.Text = "le score";
             // 
             // labelTitle
             // 
             this.labelTitle.AutoSize = true;
             this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelTitle.Location = new System.Drawing.Point(445, 6);
+            this.labelTitle.Location = new System.Drawing.Point(439, 23);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(92, 31);
+            this.labelTitle.Size = new System.Drawing.Size(147, 31);
             this.labelTitle.TabIndex = 72;
-            this.labelTitle.Text = "label2";
+            this.labelTitle.Text = "le position";
             // 
             // tbMsg
             // 
@@ -61,11 +63,29 @@
             // tbChat
             // 
             this.tbChat.Enabled = false;
-            this.tbChat.Location = new System.Drawing.Point(367, 40);
+            this.tbChat.Location = new System.Drawing.Point(367, 56);
             this.tbChat.Multiline = true;
             this.tbChat.Name = "tbChat";
-            this.tbChat.Size = new System.Drawing.Size(205, 269);
+            this.tbChat.Size = new System.Drawing.Size(205, 253);
             this.tbChat.TabIndex = 144;
+            // 
+            // labelForScore
+            // 
+            this.labelForScore.AutoSize = true;
+            this.labelForScore.Location = new System.Drawing.Point(364, 12);
+            this.labelForScore.Name = "labelForScore";
+            this.labelForScore.Size = new System.Drawing.Size(35, 13);
+            this.labelForScore.TabIndex = 145;
+            this.labelForScore.Text = "Score";
+            // 
+            // labelForPos
+            // 
+            this.labelForPos.AutoSize = true;
+            this.labelForPos.Location = new System.Drawing.Point(445, 12);
+            this.labelForPos.Name = "labelForPos";
+            this.labelForPos.Size = new System.Drawing.Size(44, 13);
+            this.labelForPos.TabIndex = 146;
+            this.labelForPos.Text = "Position";
             // 
             // FormPacman
             // 
@@ -73,6 +93,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(584, 344);
+            this.Controls.Add(this.labelForPos);
+            this.Controls.Add(this.labelForScore);
             this.Controls.Add(this.tbChat);
             this.Controls.Add(this.tbMsg);
             this.Controls.Add(this.labelTitle);
@@ -92,6 +114,8 @@
         private System.Windows.Forms.Label labelTitle;
         private System.Windows.Forms.TextBox tbMsg;
         private System.Windows.Forms.TextBox tbChat;
+        private System.Windows.Forms.Label labelForScore;
+        private System.Windows.Forms.Label labelForPos;
     }
 }
 

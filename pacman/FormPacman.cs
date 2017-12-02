@@ -150,13 +150,13 @@ namespace pacman
                 }
             }
 
-            AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
+            //AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
             foreach (var ghost in gameState.GhostData)
             {
                 DrawStatic(ghost, Properties.Resources.pink_guy);
             }
 
-            AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
+            //AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
             foreach (var food in gameState.FoodData)
             {
                 DrawStatic(food, Properties.Resources.coin);
