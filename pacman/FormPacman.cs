@@ -15,6 +15,7 @@ namespace pacman
         const string SERVER_ENDPOINT = "tcp://localhost:8086/OGPGameServer";
         string username;
         IGameServer server;
+        Guid guid; // identifies the player on the server
 
         // direction player is moving in. Only one will be true
         bool goup;
@@ -79,7 +80,7 @@ namespace pacman
                     return;
             }
 
-            server.SendKey(e.KeyValue, true);
+            server.SendKey(guid, e.KeyValue, true);
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -102,7 +103,7 @@ namespace pacman
                     return;
             }
 
-            server.SendKey(e.KeyValue, false);
+            server.SendKey(guid, e.KeyValue, false);
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -202,7 +203,7 @@ namespace pacman
         {
             if (e.KeyCode == Keys.Enter)
             {
-                server.SendMessage(tbMsg.Text);
+                server.SendMessage(guid, tbMsg.Text);
                 tbMsg.Clear();
                 tbMsg.Enabled = false;
                 this.Focus();
@@ -223,9 +224,9 @@ namespace pacman
 
             PacmanClientService.form = this;
             server = Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT) as IGameServer;
-            bool isConnected = server.RegisterPlayer(port, username);
+            guid = server.RegisterPlayer(port, username);
             this.AddMessageList(server.GetMessageHistory());
-            if (!isConnected)
+            if (guid == Guid.Empty)
             {
                 MessageBox.Show("Server refused connection. Maybe room is already full?"); // TODO: handle with exception? ignore?
             }

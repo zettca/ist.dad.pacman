@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace services
 {
@@ -23,9 +24,9 @@ namespace services
 
     public interface IGameServer // Client >> Server
     {
-        bool RegisterPlayer(int port, string username);
-        void SendKey(int keyValue, bool isKeyDown);
-        void SendMessage(string msg);
+        Guid RegisterPlayer(int port, string username);
+        void SendKey(Guid from, int keyValue, bool isKeyDown);
+        void SendMessage(Guid from, string msg);
         List<string> GetMessageHistory();
     }
 

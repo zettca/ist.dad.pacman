@@ -14,7 +14,7 @@ namespace pacman
             Application.SetCompatibleTextRenderingDefault(false);
 
             Random rand = new Random();
-            string username = (args.Length > 0) ? args[0] : rand.Next(9999).ToString();
+            string username = (args.Length > 0) ? args[0] : rand.Next(9999).ToString("D4");
             Application.Run(new FormPacman(username));
         }
 

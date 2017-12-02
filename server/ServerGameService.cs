@@ -9,6 +9,7 @@ namespace server
     class ServerGameService : MarshalByRefObject, IGameServer
     {
         Dictionary<string, IGameClient> clients;
+        Dictionary<Guid, string> clientNames;
         List<string> messages;
         List<PlayerAction> playerInputQueue;
         StateMachine gameInstance;
@@ -18,6 +19,7 @@ namespace server
         ServerGameService()
         {
             clients = new Dictionary<string, IGameClient>();
+            clientNames = new Dictionary<Guid, string>();
             messages = new List<string>();
             playerInputQueue = new List<PlayerAction>();
         }
@@ -44,25 +46,28 @@ namespace server
             thread.Start();
         }
 
-        public bool RegisterPlayer(int port, string username)
+        public Guid RegisterPlayer(int port, string username)
         {
-            if (clients.Count >= Program.numPlayers || clients.ContainsKey(username)) return false;
+            if (clients.Count >= Program.numPlayers || clients.ContainsKey(username))
+                return Guid.Empty;
 
             string endpoint = "tcp://localhost:" + port.ToString() + "/GameClient";
             IGameClient clientConnection = (IGameClient)Activator.GetObject(typeof(IGameClient), endpoint);
+            Guid clientGuid = Guid.NewGuid();
 
             clients.Add(username, clientConnection);
+            clientNames.Add(clientGuid, username);
 
             //client.SendGameState(null);
 
-            Console.WriteLine("New client connected: " + endpoint);
+            Console.WriteLine("New client \"(" + username + ")\" connected at " + endpoint);
 
             if (clients.Count == Program.numPlayers)
             {
                 StartGame(Program.gameName);
             }
 
-            return true;
+            return clientGuid;
         }
 
         private void GameInstanceThread()
@@ -92,19 +97,24 @@ namespace server
             }
         }
 
-        public void SendKey(int keyValue, bool isKeyDown)
+        public void SendKey(Guid from, int keyValue, bool isKeyDown)
         {
             // TODO: find who the player is
-            string playerId = "player12";
-            playerInputQueue.Add(new PlayerAction(playerId, keyValue, isKeyDown));
-            Console.WriteLine("INPUT RECEIVED: " + keyValue.ToString() + " " + isKeyDown.ToString());
+            string playerName = clientNames[from];
+            playerInputQueue.Add(new PlayerAction(playerName, keyValue, isKeyDown));
+            Console.WriteLine("INPUT from " + playerName + ": " + keyValue.ToString()
+                + " " + isKeyDown.ToString());
         }
 
-        public void SendMessage(string msg)
+        public void SendMessage(Guid from, string msg)
         {
+            string playerName = clientNames[from];
             if (msg.Trim().Length > 0)
             {
-                Console.WriteLine("Message received: " + msg);
+                // prepend playName
+                msg = playerName + ": " + msg;
+
+                Console.WriteLine("Message from " + playerName + ": " + msg);
                 messages.Add(msg);
 
                 Thread thread = new Thread(() => BroadcastMessage(clients.Values, msg));
