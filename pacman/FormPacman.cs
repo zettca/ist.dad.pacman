@@ -1,6 +1,8 @@
 ﻿using services;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
@@ -20,22 +22,12 @@ namespace pacman
         // direction player is moving in. Only one will be true
         bool goup, godown, goleft, goright;
 
-        int boardRight = 320;
-        int boardBottom = 320;
-        int boardLeft = 0;
-        int boardTop = 40;
-        //player speed
-        int speed = 5;
+        Image
+            imgLeft = Properties.Resources.Left,
+            imgRight = Properties.Resources.Right,
+            imgDown = Properties.Resources.Down,
+            imgUp = Properties.Resources.Up;
 
-        int score = 0; int total_coins = 61;
-
-        //ghost speed for the one direction ghosts
-        int ghost1 = 5;
-        int ghost2 = 5;
-
-        //x and y directions for the bi-direccional pink ghost
-        int ghost3x = 5;
-        int ghost3y = 5;
 
         public FormPacman(string username)
         {
@@ -51,22 +43,18 @@ namespace pacman
                 case Keys.Left:
                     if (goleft) return;
                     goleft = true;
-                    pacman.Image = Properties.Resources.Left;
                     break;
                 case Keys.Right:
                     if (goright) return;
                     goright = true;
-                    pacman.Image = Properties.Resources.Right;
                     break;
                 case Keys.Up:
                     if (goup) return;
                     goup = true;
-                    pacman.Image = Properties.Resources.Up;
                     break;
                 case Keys.Down:
                     if (godown) return;
                     godown = true;
-                    pacman.Image = Properties.Resources.down;
                     break;
                 case Keys.Enter:
                     tbMsg.Enabled = true;
@@ -100,93 +88,6 @@ namespace pacman
             }
 
             server.SendKey(guid, e.KeyValue, false);
-        }
-
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            //move player
-            if (goleft)
-            {
-                if (pacman.Left > (boardLeft))
-                    pacman.Left -= speed;
-            }
-            if (goright)
-            {
-                if (pacman.Left < (boardRight))
-                    pacman.Left += speed;
-            }
-            if (goup)
-            {
-                if (pacman.Top > (boardTop))
-                    pacman.Top -= speed;
-            }
-            if (godown)
-            {
-                if (pacman.Top < (boardBottom))
-                    pacman.Top += speed;
-            }
-            //move ghosts
-            redGhost.Left += ghost1;
-            yellowGhost.Left += ghost2;
-
-            // if the red ghost hits the picture box 4 then wereverse the speed
-            if (redGhost.Bounds.IntersectsWith(pictureBox1.Bounds))
-                ghost1 = -ghost1;
-            // if the red ghost hits the picture box 3 we reverse the speed
-            else if (redGhost.Bounds.IntersectsWith(pictureBox2.Bounds))
-                ghost1 = -ghost1;
-            // if the yellow ghost hits the picture box 1 then wereverse the speed
-            if (yellowGhost.Bounds.IntersectsWith(pictureBox3.Bounds))
-                ghost2 = -ghost2;
-            // if the yellow chost hits the picture box 2 then wereverse the speed
-            else if (yellowGhost.Bounds.IntersectsWith(pictureBox4.Bounds))
-                ghost2 = -ghost2;
-            //moving ghosts and bumping with the walls end
-            //for loop to check walls, ghosts and points
-            foreach (Control x in this.Controls)
-            {
-                // checking if the player hits the wall or the ghost, then game is over
-                if (x is PictureBox && x.Tag == "wall" || x.Tag == "ghost")
-                {
-                    if (((PictureBox)x).Bounds.IntersectsWith(pacman.Bounds))
-                    {
-                        pacman.Left = 0;
-                        pacman.Top = 25;
-                        timer1.Stop();
-                    }
-                }
-                if (x is PictureBox && x.Tag == "coin")
-                {
-                    if (((PictureBox)x).Bounds.IntersectsWith(pacman.Bounds))
-                    {
-                        this.Controls.Remove(x);
-                        score++;
-                        //TODO check if all coins where "eaten"
-                        if (score == total_coins)
-                        {
-                            //pacman.Left = 0;
-                            //pacman.Top = 25;
-                            timer1.Stop();
-                        }
-                    }
-                }
-            }
-            pinkGhost.Left += ghost3x;
-            pinkGhost.Top += ghost3y;
-
-            if (pinkGhost.Left < boardLeft ||
-                pinkGhost.Left > boardRight ||
-                (pinkGhost.Bounds.IntersectsWith(pictureBox1.Bounds)) ||
-                (pinkGhost.Bounds.IntersectsWith(pictureBox2.Bounds)) ||
-                (pinkGhost.Bounds.IntersectsWith(pictureBox3.Bounds)) ||
-                (pinkGhost.Bounds.IntersectsWith(pictureBox4.Bounds)))
-            {
-                ghost3x = -ghost3x;
-            }
-            if (pinkGhost.Top < boardTop || pinkGhost.Top + pinkGhost.Height > boardBottom - 2)
-            {
-                ghost3y = -ghost3y;
-            }
         }
 
         private void tbMsg_KeyDown(object sender, KeyEventArgs e)
@@ -239,15 +140,77 @@ namespace pacman
 
         public void DrawGame(PacmanGameState gameState)
         {
-            foreach (PlayerData player in gameState.PlayerData)
+            foreach (var player in gameState.PlayerData)
             {
+                DrawPacman(player);
                 if (player.Pid == guid)
                 {
                     labelScore.Text = player.Score.ToString();
                     labelTitle.Text = String.Format("({0}, {1})", player.Position.X, player.Position.Y);
                 }
             }
-            
+
+            AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
+            foreach (var ghost in gameState.GhostData)
+            {
+                DrawStatic(ghost, Properties.Resources.pink_guy);
+            }
+
+            AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
+            foreach (var food in gameState.FoodData)
+            {
+                DrawStatic(food, Properties.Resources.coin);
+            }
+
+        }
+        private PictureBox CreatePictureForEntity(EntityData entity, Image image)
+        {
+            PictureBox pic = new PictureBox
+            {
+                Name = entity.Pid.ToString(),
+                Size = new Size(entity.Size.X, entity.Size.Y),
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                Location = new Point(entity.Position.X, entity.Position.Y),
+                BackColor = Color.Transparent,
+                Image = image,
+            };
+            Controls.Add(pic);
+            return pic;
+        }
+
+
+        private void DrawStatic(EntityData entity, Image image)
+        {
+            Control[] pics = Controls.Find(entity.Pid.ToString(), true);
+
+            if (pics.Length == 0)
+            {
+                CreatePictureForEntity(entity, image);
+            }
+        }
+
+        private Image GetNewDirectionImage(Vec2 dir)
+        {
+            if (dir.X > 0) return imgRight;
+            if (dir.X < 0) return imgLeft;
+            if (dir.Y > 0) return imgDown;
+            if (dir.Y < 0) return imgUp;
+
+            return null;
+        }
+
+        private void DrawPacman(PlayerData player)
+        {
+            Control[] pics = Controls.Find(player.Pid.ToString(), true);
+
+            PictureBox pic = (pics.Length == 0) ? CreatePictureForEntity(player, imgLeft) : pics[0] as PictureBox;
+
+            pic.Location = new Point(player.Position.X, player.Position.Y);
+            Image img = GetNewDirectionImage(player.Direction);
+            if (img != null && pic.Image != img)
+            {
+                pic.Image = img;
+            }
         }
     }
 

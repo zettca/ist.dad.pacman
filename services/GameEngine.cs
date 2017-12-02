@@ -26,7 +26,7 @@ namespace services
     [Serializable]
     public class PacmanGameState : IGameState
     {
-        const int SPEED = 4, DIST = 20;
+        const int SPEED = 8, SIZE = 30;
 
         private List<PlayerData> playerData;
         private List<EntityData> ghostData;
@@ -44,7 +44,7 @@ namespace services
             return new Vec2(rnd.Next(maxX), rnd.Next(maxY));
         }
 
-        public PacmanGameState(List<Guid> playerNames, int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
+        public PacmanGameState(List<Guid> playerIDs, int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
         {
             playerData = new List<PlayerData>();
             ghostData = new List<EntityData>();
@@ -53,13 +53,13 @@ namespace services
             this.windowY = windowY;
 
             for (int i = 0; i < numPlayers; i++)
-                playerData.Add(new PlayerData(playerNames[i], new Vec2(10, 10 + DIST * i)));
+                playerData.Add(new PlayerData(playerIDs[i], new Vec2(10, 10 + SIZE * i), new Vec2(SIZE, SIZE)));
 
             for (int i = 0; i < numGhosts; i++)
-                ghostData.Add(new EntityData(NewRandomVector(windowX, windowY)));
+                ghostData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(SIZE, SIZE)));
 
             for (int i = 0; i < numFoods; i++)
-                foodData.Add(new EntityData(NewRandomVector(windowX, windowY)));
+                foodData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(20, 20)));
         }
 
         public PlayerData GetPlayer(Guid pid)
@@ -87,16 +87,7 @@ namespace services
             foreach (var player in playerData)
             {
                 player.Position = UpdatePosition(player);
-
-                int score = ProcessCollisionScore(player.Position);
-                if (score < 0)
-                {
-                    player.Alive = false;
-                }
-                else if (score > 0)
-                {
-                    player.Score += score;
-                }
+                ProcessCollision(player);
             }
 
             return this;
@@ -127,39 +118,37 @@ namespace services
                 player.Position.Y + player.Direction.Y * SPEED);
 
             if (pos.X <= 0) pos.X = 0;
-            else if (pos.X >= windowX) pos.X = windowX;
-            else if (pos.Y <= 0) pos.Y = 0;
-            else if (pos.Y >= windowY) pos.Y = windowY;
+            if (pos.Y <= 0) pos.Y = 0;
+            if (pos.X >= windowX) pos.X = windowX;
+            if (pos.Y >= windowY) pos.Y = windowY;
 
             return pos;
         }
 
-        private bool DoBoxesIntersect(Vec2 pos1, Vec2 size1, Vec2 pos2, Vec2 size2)
+        private bool DoBoxesIntersect(EntityData e1, EntityData e2)
         {
-            return ((pos1.X - pos2.X) * 2 < (size1.X + size2.X)) &&
-                   ((pos1.Y - pos2.Y) * 2 < (size1.Y + size2.Y));
+            return ((e1.Position.X - e2.Position.X) * 2 < (e1.Size.X + e2.Size.X)) &&
+                   ((e1.Position.Y - e2.Position.Y) * 2 < (e1.Size.Y + e2.Size.Y));
         }
 
-        private int ProcessCollisionScore(Vec2 playerPos)
+        private void ProcessCollision(PlayerData player)
         {
             foreach (var ghost in ghostData)
             {
-                if (DoBoxesIntersect(playerPos, new Vec2(20, 20), ghost.Position, new Vec2(20, 20)))
+                if (DoBoxesIntersect(player, ghost))
                 {
-                    return -1;
+                    player.Alive = false;
                 }
             }
 
             foreach (var food in foodData)
             {
-                if (DoBoxesIntersect(playerPos, new Vec2(20, 20), food.Position, new Vec2(20, 20)))
+                if (DoBoxesIntersect(player, food))
                 {
                     food.Alive = false;
-                    return 10;
+                    player.Score += 10;
                 }
             }
-
-            return 0;
         }
 
         public override string ToString()
@@ -167,7 +156,9 @@ namespace services
             string output = "";
             foreach (var player in playerData)
             {
-                output += String.Format("{0} {1} {2}" + Environment.NewLine, player.Pid, player.Position, player.Score);
+                string shortName = player.Pid.ToString().Substring(0, 8);
+                output += String.Format("{0} {1} {2}", shortName, player.Position, player.Score);
+                output += Environment.NewLine;
             }
             return output;
         }
@@ -176,19 +167,17 @@ namespace services
     [Serializable]
     public class PlayerData : EntityData
     {
-        private Guid pid;
         private int score;
         private Vec2 direction;
 
-        public Guid Pid { get => pid; set => pid = value; }
         public int Score { get => score; set => score = value; }
-        internal Vec2 Direction { get => direction; set => direction = value; }
+        public Vec2 Direction { get => direction; set => direction = value; }
 
-        public PlayerData(Guid pid, Vec2 pos) : this(pid, pos.X, pos.Y) { }
+        public PlayerData(Vec2 pos, Vec2 size) : this(new Guid(), pos, size) { }
 
-        public PlayerData(Guid pid, int x, int y) : this(pid, x, y, 0, true) { }
+        public PlayerData(Guid pid, Vec2 pos, Vec2 size) : this(pid, pos, size, 0, true) { }
 
-        public PlayerData(Guid pid, int x, int y, int score, bool alive) : base(x, y, alive)
+        public PlayerData(Guid pid, Vec2 pos, Vec2 size, int score, bool alive) : base(pos, size, alive)
         {
             Pid = pid;
             Score = score;
@@ -199,19 +188,25 @@ namespace services
     [Serializable]
     public class EntityData
     {
+        private Guid pid;
         private bool alive;
         private Vec2 position;
+        private Vec2 size;
 
+        public Guid Pid { get => pid; set => pid = value; } // internal modifier ?
         public bool Alive { get => alive; set => alive = value; }
         public Vec2 Position { get => position; set => position = value; }
+        public Vec2 Size { get => size; set => size = value; }
 
-        public EntityData(Vec2 pos) : this(pos.X, pos.Y) { }
+        public EntityData(Vec2 pos, Vec2 size) : this(pos, size, true) { }
 
-        public EntityData(int x, int y) : this(x, y, true) { }
+        public EntityData(Vec2 pos, Vec2 size, bool alive) : this(new Guid(), pos, size, alive) { }
 
-        public EntityData(int x, int y, bool alive)
+        public EntityData(Guid guid, Vec2 pos, Vec2 size, bool alive)
         {
-            Position = new Vec2(x, y);
+            Pid = guid;
+            Position = pos;
+            Size = size;
             Alive = alive;
         }
     }

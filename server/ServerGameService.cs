@@ -99,7 +99,8 @@ namespace server
                 }
             }
 
-            Console.WriteLine("GameState: " + gameState.ToString());
+            Console.WriteLine("GameState:");
+            Console.WriteLine(gameState.ToString());
         }
 
         public void SendKey(Guid pid, int keyValue, bool isKeyDown)
