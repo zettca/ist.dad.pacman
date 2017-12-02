@@ -3,22 +3,39 @@ using System;
 
 namespace services
 {
-    // TODO: implement something better, or send Keys object through network ?
     public struct PlayerAction
     {
-        public string playerId;
+        public Guid pid;
         public int keyValue;
         public bool isKeyDown;
-        public PlayerAction(string pid, int keyVal, bool isDown)
+        public PlayerAction(Guid pid, int keyVal, bool isDown)
         {
-            playerId = pid;
-            keyValue = keyVal;
-            isKeyDown = isDown;
+            this.pid = pid;
+            this.keyValue = keyVal;
+            this.isKeyDown = isDown;
+        }
+    }
+
+    [Serializable]
+    public class Message
+    {
+        public string sender, message;
+
+        public Message(string sender, string message)
+        {
+            this.sender = sender;
+            this.message = message;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("{0}: {1}", sender, message) + Environment.NewLine;
         }
     }
 
     public interface IGameState
     {
+        IGameState ApplyTick();
         IGameState ApplyAction(PlayerAction action);
     }
 
@@ -27,12 +44,12 @@ namespace services
         Guid RegisterPlayer(int port, string username);
         void SendKey(Guid from, int keyValue, bool isKeyDown);
         void SendMessage(Guid from, string msg);
-        List<string> GetMessageHistory();
+        List<Message> GetMessageHistory();
     }
 
     public interface IGameClient // Server > Client
     {
         void SendGameState(IGameState state); // TODO: Marshall some GameState
-        void SendMessage(string msg);
+        void SendMessage(Message message);
     }
 }

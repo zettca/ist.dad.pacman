@@ -10,8 +10,8 @@ namespace server
     {
         Dictionary<string, IGameClient> clients;
         Dictionary<Guid, string> clientNames;
-        List<string> messages;
-        List<PlayerAction> playerInputQueue;
+        List<Message> messages;
+        List<PlayerAction> playerActions;
         StateMachine gameInstance;
 
         ICollection<IGameClient> ClientConnections { get => clients.Values; }
@@ -20,26 +20,24 @@ namespace server
         {
             clients = new Dictionary<string, IGameClient>();
             clientNames = new Dictionary<Guid, string>();
-            messages = new List<string>();
-            playerInputQueue = new List<PlayerAction>();
+            messages = new List<Message>();
+            playerActions = new List<PlayerAction>();
+        }
+
+        private IGameState GetInitialGameState(string gameId)
+        {
+            switch (gameId)
+            {
+                case "pacman":
+                    return new PacmanGameState(clientNames.Keys.ToList(), Program.numPlayers, 5, 5, 300, 300);
+                default:
+                    return null;
+            }
         }
 
         private void StartGame(string gameId)
         {
-            IGameState initialState;
-            switch (gameId)
-            {
-                case "pacman":
-                    Console.WriteLine(clients.Count.ToString());
-                    Console.WriteLine(Program.numPlayers);
-                    initialState = new PacmanGameState(clients.Keys.ToList(), Program.numPlayers, 5, 5, 300, 300);
-                    break;
-                default:
-                    initialState = null;
-                    Console.WriteLine("Unknown game...");
-                    break;
-            }
-            gameInstance = new StateMachine(initialState);
+            gameInstance = new StateMachine(GetInitialGameState(gameId));
 
             ThreadStart ts = new ThreadStart(GameInstanceThread);
             Thread thread = new Thread(ts);
@@ -58,8 +56,6 @@ namespace server
             clients.Add(username, clientConnection);
             clientNames.Add(clientGuid, username);
 
-            //client.SendGameState(null);
-
             Console.WriteLine("New client \"(" + username + ")\" connected at " + endpoint);
 
             if (clients.Count == Program.numPlayers)
@@ -72,10 +68,12 @@ namespace server
 
         private void GameInstanceThread()
         {
-            const int MS_PER_ROUND = 1000;
+            const int MS_PER_ROUND = 100;
             while (true)
             {
-                gameInstance.ApplyTransitions(playerInputQueue);
+                gameInstance.ApplyTransitions(playerActions);
+                playerActions.Clear();
+                gameInstance.ApplyTick();
 
                 ThreadStart ts = new ThreadStart(SendGameState);
                 Thread thread = new Thread(ts);
@@ -90,44 +88,46 @@ namespace server
             IGameState gameState = gameInstance.CurrentState;
             foreach (IGameClient client in clients.Values)
             {
-                // TODO: properly serialize GameState
-                client.SendGameState(gameState);
-                Console.WriteLine("Sent GameState:");
-                Console.WriteLine(gameState.ToString());
+                try
+                {
+                    client.SendGameState(gameState);
+                    // TODO: remove client from clients
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Client disconnected!");
+                }
             }
+
+            Console.WriteLine("GameState: " + gameState.ToString());
         }
 
-        public void SendKey(Guid from, int keyValue, bool isKeyDown)
+        public void SendKey(Guid pid, int keyValue, bool isKeyDown)
         {
-            // TODO: find who the player is
-            string playerName = clientNames[from];
-            playerInputQueue.Add(new PlayerAction(playerName, keyValue, isKeyDown));
-            Console.WriteLine("INPUT from " + playerName + ": " + keyValue.ToString()
-                + " " + isKeyDown.ToString());
+            string playerName = clientNames[pid];
+            playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
+            Console.WriteLine(String.Format("INPUT from {0}: {1} {2}", playerName, keyValue, isKeyDown));
         }
 
-        public void SendMessage(Guid from, string msg)
+        public void SendMessage(Guid pid, string msg)
         {
-            string playerName = clientNames[from];
             if (msg.Trim().Length > 0)
             {
-                // prepend playName
-                msg = playerName + ": " + msg;
+                Message message = new Message(clientNames[pid], msg);
+                Console.WriteLine(message.ToString());
+                messages.Add(message);
 
-                Console.WriteLine("Message from " + playerName + ": " + msg);
-                messages.Add(msg);
-
-                Thread thread = new Thread(() => BroadcastMessage(clients.Values, msg));
+                Thread thread = new Thread(() => BroadcastMessage(clients.Values, message));
                 thread.Start();
             }
         }
 
-        public List<string> GetMessageHistory()
+        public List<Message> GetMessageHistory()
         {
             return messages;
         }
 
-        private void BroadcastMessage(ICollection<IGameClient> clients, string msg)
+        private void BroadcastMessage(ICollection<IGameClient> clients, Message msg)
         {
             foreach (IGameClient client in clients)
             {

@@ -18,10 +18,7 @@ namespace pacman
         Guid guid; // identifies the player on the server
 
         // direction player is moving in. Only one will be true
-        bool goup;
-        bool godown;
-        bool goleft;
-        bool goright;
+        bool goup, godown, goleft, goright;
 
         int boardRight = 320;
         int boardBottom = 320;
@@ -43,7 +40,6 @@ namespace pacman
         public FormPacman(string username)
         {
             InitializeComponent();
-            labelTitle.Visible = false;
             this.username = username;
             this.Text = username + " - Pacman Client";
         }
@@ -53,22 +49,22 @@ namespace pacman
             switch (e.KeyCode)
             {
                 case Keys.Left:
-                    if (goleft) break;
+                    if (goleft) return;
                     goleft = true;
                     pacman.Image = Properties.Resources.Left;
                     break;
                 case Keys.Right:
-                    if (goright) break;
+                    if (goright) return;
                     goright = true;
                     pacman.Image = Properties.Resources.Right;
                     break;
                 case Keys.Up:
-                    if (goup) break;
+                    if (goup) return;
                     goup = true;
                     pacman.Image = Properties.Resources.Up;
                     break;
                 case Keys.Down:
-                    if (godown) break;
+                    if (godown) return;
                     godown = true;
                     pacman.Image = Properties.Resources.down;
                     break;
@@ -108,8 +104,6 @@ namespace pacman
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            labelScore.Text = "Score: " + score;
-
             //move player
             if (goleft)
             {
@@ -158,8 +152,6 @@ namespace pacman
                     {
                         pacman.Left = 0;
                         pacman.Top = 25;
-                        labelTitle.Text = "GAME OVER";
-                        labelTitle.Visible = true;
                         timer1.Stop();
                     }
                 }
@@ -174,8 +166,6 @@ namespace pacman
                         {
                             //pacman.Left = 0;
                             //pacman.Top = 25;
-                            labelTitle.Text = "GAME WON!";
-                            labelTitle.Visible = true;
                             timer1.Stop();
                         }
                     }
@@ -233,17 +223,17 @@ namespace pacman
 
         }
 
-        public void AddMessage(string msg)
+        public void AddMessage(services.Message msg)
         {
-            this.tbChat.Text += msg + Environment.NewLine;
+            tbChat.Text += msg.ToString();
         }
 
-        public void AddMessageList(List<string> msgs)
+        public void AddMessageList(List<services.Message> msgs)
         {
-            this.tbChat.Clear();
-            foreach (string msg in msgs)
+            tbChat.Clear();
+            foreach (var msg in msgs)
             {
-                this.tbChat.Text += msg + Environment.NewLine;
+                AddMessage(msg);
             }
         }
 
@@ -251,7 +241,7 @@ namespace pacman
         {
             foreach (PlayerData player in gameState.PlayerData)
             {
-                if (player.Pid == username)
+                if (player.Pid == guid)
                 {
                     labelScore.Text = player.Score.ToString();
                     labelTitle.Text = String.Format("({0}, {1})", player.Position.X, player.Position.Y);
@@ -262,8 +252,8 @@ namespace pacman
     }
 
     delegate void GameHandler(PacmanGameState state);
-    delegate void MessageHandler(string msg);
-    delegate void MessageListHandler(List<string> msgs);
+    delegate void MessageHandler(services.Message msg);
+    delegate void MessageListHandler(List<services.Message> msgs);
 
     public class PacmanClientService : MarshalByRefObject, IGameClient
     {
@@ -281,7 +271,7 @@ namespace pacman
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
         }
 
-        public void SendMessage(string msg)
+        public void SendMessage(services.Message msg)
         {
             form.Invoke(new MessageHandler(form.AddMessage), msg);
         }
