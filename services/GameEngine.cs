@@ -38,9 +38,9 @@ namespace services
         public List<EntityData> GhostData { get => ghostData; }
         public List<EntityData> FoodData { get => foodData; }
 
+        private Random rnd = new Random();
         private Vec2 NewRandomVector(int maxX, int maxY)
         {
-            Random rnd = new Random();
             return new Vec2(rnd.Next(maxX), rnd.Next(maxY));
         }
 
