@@ -37,9 +37,8 @@
             this.labelScore.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelScore.Location = new System.Drawing.Point(363, 33);
             this.labelScore.Name = "labelScore";
-            this.labelScore.Size = new System.Drawing.Size(72, 20);
+            this.labelScore.Size = new System.Drawing.Size(0, 20);
             this.labelScore.TabIndex = 71;
-            this.labelScore.Text = "le score";
             // 
             // labelTitle
             // 
@@ -47,9 +46,8 @@
             this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelTitle.Location = new System.Drawing.Point(439, 23);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(147, 31);
+            this.labelTitle.Size = new System.Drawing.Size(0, 31);
             this.labelTitle.TabIndex = 72;
-            this.labelTitle.Text = "le position";
             // 
             // tbMsg
             // 

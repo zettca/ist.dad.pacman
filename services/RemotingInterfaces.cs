@@ -35,6 +35,7 @@ namespace services
 
     public interface IGameState
     {
+        bool HasEnded();
         IGameState ApplyTick();
         IGameState ApplyAction(PlayerAction action);
     }
@@ -47,7 +48,8 @@ namespace services
 
     public interface IGameClient // Server > Client; Client -> Client
     {
-        void SendGameState(IGameState state); // TODO: Marshall some GameState
+        void SendScoreboard(Dictionary<Guid, int> scoreboard);
+        void SendGameState(IGameState state);
         void SendMessage(Message message);
 
         // used by server to broadcast new clients

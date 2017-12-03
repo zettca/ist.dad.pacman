@@ -2,14 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.Remoting;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Tcp;
 using System.Threading;
 using System.Windows.Forms;
-
-
 
 namespace pacman
 {
@@ -146,21 +141,30 @@ namespace pacman
                 DrawPacman(player);
                 if (player.Pid == guid)
                 {
+                    Control pic = Controls.Find(player.Pid.ToString(), true)[0];
+                    if (player.Alive)
+                    {
+                        pic.BackColor = Color.Green;
+                        labelTitle.Text = player.Position.ToString();
+                    }
+                    else
+                    {
+                        pic.BackColor = Color.Red;
+                        labelTitle.Text = "You're die!";
+                    }
+
                     labelScore.Text = player.Score.ToString();
-                    labelTitle.Text = String.Format("({0}, {1})", player.Position.X, player.Position.Y);
                 }
             }
 
-            //AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
             foreach (var ghost in gameState.GhostData)
             {
-                DrawStatic(ghost, Properties.Resources.pink_guy);
+                DrawObject(ghost, Properties.Resources.pink_guy);
             }
 
-            //AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
             foreach (var food in gameState.FoodData)
             {
-                DrawStatic(food, Properties.Resources.cccc);
+                DrawObject(food, Properties.Resources.cccc);
             }
 
         }
@@ -180,21 +184,13 @@ namespace pacman
         }
 
 
-        private void DrawStatic(EntityData entity, Image image)
+        private void DrawObject(EntityData entity, Image image)
         {
             Control[] pics = Controls.Find(entity.Pid.ToString(), true);
+            PictureBox pic = (pics.Length == 0) ? CreatePictureForEntity(entity, image) : pics[0] as PictureBox;
 
-            if (pics.Length == 0)
-            {
-                CreatePictureForEntity(entity, image);
-            }
-            else if (entity.Alive == false)
-            {
-                foreach (Control c in pics)
-                {
-                    c.Hide();
-                }
-            }
+            pic.Location = new Point(entity.Position.X, entity.Position.Y);
+            if (!entity.Alive) pic.Hide();
         }
 
         private Image GetNewDirectionImage(Vec2 dir)
@@ -210,17 +206,16 @@ namespace pacman
         private void DrawPacman(PlayerData player)
         {
             Control[] pics = Controls.Find(player.Pid.ToString(), true);
-
             PictureBox pic = (pics.Length == 0) ? CreatePictureForEntity(player, imgLeft) : pics[0] as PictureBox;
 
             pic.Location = new Point(player.Position.X, player.Position.Y);
+            pic.BackColor = (player.Alive) ? Color.Transparent : Color.Red;
             Image img = GetNewDirectionImage(player.Direction);
             if (img != null && pic.Image != img)
             {
                 pic.Image = img;
             }
         }
-
 
         private void BroadcastMessage(services.Message msg)
         {
@@ -238,8 +233,14 @@ namespace pacman
         {
             peers.Add(peer);
         }
+
+        public void Alert(string msg)
+        {
+            MessageBox.Show(msg);
+        }
     }
 
+    delegate void StringHandler(string msg);
     delegate void GameHandler(PacmanGameState state);
     delegate void MessageHandler(services.Message msg);
 
@@ -278,6 +279,17 @@ namespace pacman
         public Uri GetUri()
         {
             return endpoint;
+        }
+
+        public void SendScoreboard(Dictionary<Guid, int> scoreboard)
+        {
+            if (scoreboard == null) return;
+            string scores = "";
+            foreach (var entry in scoreboard)
+            {
+                scores += String.Format("{0} {1}" + Environment.NewLine, entry.Key + " " + entry.Value);
+            }
+            form.Invoke(new StringHandler(form.Alert), scores);
         }
     }
 }

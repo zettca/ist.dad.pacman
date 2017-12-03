@@ -29,7 +29,7 @@ namespace server
             switch (gameId)
             {
                 case "pacman":
-                    return new PacmanGameState(clientNames.Keys.ToList(), Program.numPlayers, 5, 5, 300, 300);
+                    return new PacmanGameState(clientNames.Keys.ToList(), Program.numPlayers, 2, 16, 300, 300);
                 default:
                     return null;
             }
@@ -90,17 +90,40 @@ namespace server
 
         private void GameInstanceThread()
         {
-            while (true)
+            ThreadStart ts = new ThreadStart(SendGameState);
+            Thread thread;
+            while (!gameInstance.CurrentState.HasEnded())
             {
                 gameInstance.ApplyTransitions(playerActions);
                 playerActions.Clear();
                 gameInstance.ApplyTick();
 
-                ThreadStart ts = new ThreadStart(SendGameState);
-                Thread thread = new Thread(ts);
+                thread = new Thread(ts);
                 thread.Start();
 
                 Thread.Sleep(Program.msec);
+            }
+
+            Console.WriteLine("Game has ended!");
+
+            ts = new ThreadStart(GameEnd);
+            thread = new Thread(ts);
+            thread.Start();
+        }
+
+        private void GameEnd()
+        {
+            Dictionary<Guid, int> scores = new Dictionary<Guid, int>();
+            PacmanGameState gameState = (PacmanGameState)gameInstance.CurrentState;
+
+            foreach (var player in gameState.PlayerData)
+            {
+                scores.Add(player.Pid, player.Score);
+            }
+
+            foreach (IGameClient client in clients.Values)
+            {
+                client.SendScoreboard(null);
             }
         }
 
@@ -112,23 +135,23 @@ namespace server
                 try
                 {
                     client.SendGameState(gameState);
-                    // TODO: remove client from clients
                 }
                 catch (Exception)
                 {
                     Console.WriteLine("Client disconnected!");
+                    clients.Remove(clients.First(pair => pair.Value == client).Key);
                 }
             }
 
-            Console.WriteLine("GameState:");
-            Console.WriteLine(gameState.ToString());
+            //Console.WriteLine("GameState:");
+            //Console.WriteLine(gameState.ToString());
         }
 
         public void SendKey(Guid pid, int keyValue, bool isKeyDown)
         {
             string playerName = clientNames[pid];
             playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
-            Console.WriteLine(String.Format("INPUT from {0}: {1} {2}", playerName, keyValue, isKeyDown));
+            Console.WriteLine("INPUT from {0}: {1} {2}", playerName, keyValue, isKeyDown);
         }
     }
 }

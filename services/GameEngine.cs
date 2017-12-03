@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace services
 {
     [Serializable]
-    public struct Vec2 // Integer vector2
+    public class Vec2 // Integer Vector2
     {
         private int x, y;
 
-        public Vec2(int x, int y) : this()
+        public Vec2(int x, int y)
         {
             X = x;
             Y = y;
@@ -29,22 +30,28 @@ namespace services
         const int SPEED = 8, SIZE = 30;
         const int TILE_SIZE = 40;
 
+        private int windowX, windowY;
+        private bool isGameOver = false;
+
         private List<PlayerData> playerData;
         private List<EntityData> ghostData;
         private List<EntityData> foodData;
-
-        private int windowX, windowY;
 
         public List<PlayerData> PlayerData { get => playerData; }
         public List<EntityData> GhostData { get => ghostData; }
         public List<EntityData> FoodData { get => foodData; }
 
-        private Random rnd = new Random();
-        private Vec2 NewRandomVector(int maxX, int maxY)
+        private Random rnd = new Random((int)DateTime.Now.Ticks);
+        private Vec2 NewRandomPosition(int maxX, int maxY)
         {
             return new Vec2(
                 TILE_SIZE + rnd.Next((maxX - TILE_SIZE) / TILE_SIZE) * TILE_SIZE,
                 TILE_SIZE + rnd.Next((maxY - TILE_SIZE) / TILE_SIZE) * TILE_SIZE);
+        }
+
+        private Vec2 NewRandomDir()
+        {
+            return new Vec2(rnd.Next(-1, 2), rnd.Next(-1, 2));
         }
 
         public PacmanGameState(List<Guid> playerIDs, int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
@@ -58,14 +65,14 @@ namespace services
             for (int i = 0; i < numPlayers; i++)
                 playerData.Add(
                     new PlayerData(playerIDs[i],
-                        new Vec2(8, 40 * (i + 1)),
+                        new Vec2(8, TILE_SIZE * (i + 1)),
                         new Vec2(SIZE, SIZE)));
 
             for (int i = 0; i < numGhosts; i++)
-                ghostData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(SIZE, SIZE)));
+                ghostData.Add(new EntityData(NewRandomPosition(windowX, windowY), NewRandomDir(), new Vec2(SIZE, SIZE)));
 
             for (int i = 0; i < numFoods; i++)
-                foodData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(SIZE, SIZE)));
+                foodData.Add(new EntityData(NewRandomPosition(windowX, windowY), new Vec2(SIZE / 2, SIZE / 2)));
         }
 
         public PlayerData GetPlayer(Guid pid)
@@ -82,7 +89,7 @@ namespace services
         {
             PlayerData player = GetPlayer(action.pid);
 
-            if (player == null) return this; // TODO: handle better
+            if (player == null || !player.Alive) return this;
 
             player.Direction = UpdateDirection(player.Direction, action);
             return this;
@@ -92,9 +99,16 @@ namespace services
         {
             foreach (var player in playerData)
             {
-                player.Position = UpdatePosition(player);
+                player.Position = UpdatePlayerPosition(player);
                 ProcessCollision(player);
             }
+
+            foreach (var ghost in ghostData)
+            {
+                ghost.Position = UpdateGhostPosition(ghost);
+            }
+
+            isGameOver = IsGameOver();
 
             return this;
         }
@@ -117,7 +131,7 @@ namespace services
             }
         }
 
-        private Vec2 UpdatePosition(PlayerData player)
+        private Vec2 UpdatePlayerPosition(PlayerData player)
         {
             Vec2 pos = new Vec2(
                 player.Position.X + player.Direction.X * SPEED,
@@ -131,6 +145,20 @@ namespace services
             return pos;
         }
 
+        private Vec2 UpdateGhostPosition(EntityData ghost)
+        {
+            Vec2 pos = new Vec2(
+                ghost.Position.X + ghost.Direction.X * SPEED,
+                ghost.Position.Y + ghost.Direction.Y * SPEED);
+
+            if (pos.X <= 0) ghost.Direction.X = 1;
+            else if (pos.Y <= 0) ghost.Direction.Y = 1;
+            else if (pos.X >= windowX) ghost.Direction.X = -1;
+            else if (pos.Y >= windowY) ghost.Direction.Y = -1;
+
+            return pos;
+        }
+
         private bool DoBoxesIntersect(EntityData e1, EntityData e2)
         {
             return (Math.Abs(e1.Position.X - e2.Position.X) * 2 < (e1.Size.X + e2.Size.X)) &&
@@ -139,14 +167,14 @@ namespace services
 
         private void ProcessCollision(PlayerData player)
         {
-            if (player.Alive == false)
-                return;
+            if (player.Alive == false) return;
 
             foreach (var ghost in ghostData)
             {
                 if (DoBoxesIntersect(player, ghost))
                 {
                     player.Alive = false;
+                    player.Direction = new Vec2(0, 0);
                 }
             }
 
@@ -160,16 +188,42 @@ namespace services
             }
         }
 
+        private bool IsGameOver()
+        {
+            bool playersAlive = false;
+            foreach (var player in playerData)
+            {
+                if (player.Alive)
+                {
+                    playersAlive = true;
+                    break;
+                }
+            }
+
+            if (!playersAlive) return true;
+
+            foreach (var food in foodData)
+            {
+                if (food.Alive) return false;
+            }
+
+            return true;
+        }
+
         public override string ToString()
         {
             string output = "";
             foreach (var player in playerData)
             {
-                string shortName = player.Pid.ToString().Substring(0, 8);
-                output += String.Format("{0} {1} {2}", shortName, player.Position, player.Score);
+                output += player.Pid.ToString().Substring(0, 8) + " " + player.ToString();
                 output += Environment.NewLine;
             }
             return output;
+        }
+
+        public bool HasEnded()
+        {
+            return isGameOver;
         }
     }
 
@@ -177,20 +231,17 @@ namespace services
     public class PlayerData : EntityData
     {
         private int score;
-        private Vec2 direction;
 
         public int Score { get => score; set => score = value; }
-        public Vec2 Direction { get => direction; set => direction = value; }
 
-        public PlayerData(Vec2 pos, Vec2 size) : this(new Guid(), pos, size) { }
+        public PlayerData(Vec2 pos, Vec2 size) : this(Guid.NewGuid(), pos, size) { }
 
         public PlayerData(Guid pid, Vec2 pos, Vec2 size) : this(pid, pos, size, 0, true) { }
 
-        public PlayerData(Guid pid, Vec2 pos, Vec2 size, int score, bool alive) : base(pos, size, alive)
+        public PlayerData(Guid pid, Vec2 pos, Vec2 size, int score, bool alive) : base(pos, new Vec2(0, 0), size, alive)
         {
             Pid = pid;
             Score = score;
-            Direction = new Vec2(0, 0);
         }
     }
 
@@ -199,22 +250,25 @@ namespace services
     {
         private Guid pid;
         private bool alive;
-        private Vec2 position;
-        private Vec2 size;
+        private Vec2 position, direction, size;
 
         public Guid Pid { get => pid; set => pid = value; } // internal modifier ?
         public bool Alive { get => alive; set => alive = value; }
         public Vec2 Position { get => position; set => position = value; }
+        public Vec2 Direction { get => direction; set => direction = value; }
         public Vec2 Size { get => size; set => size = value; }
 
-        public EntityData(Vec2 pos, Vec2 size) : this(pos, size, true) { }
+        public EntityData(Vec2 pos, Vec2 size) : this(pos, new Vec2(0, 0), size) { }
 
-        public EntityData(Vec2 pos, Vec2 size, bool alive) : this(Guid.NewGuid(), pos, size, alive) { }
+        public EntityData(Vec2 pos, Vec2 dir, Vec2 size) : this(pos, dir, size, true) { }
 
-        public EntityData(Guid guid, Vec2 pos, Vec2 size, bool alive)
+        public EntityData(Vec2 pos, Vec2 dir, Vec2 size, bool alive) : this(Guid.NewGuid(), pos, dir, size, alive) { }
+
+        public EntityData(Guid guid, Vec2 pos, Vec2 dir, Vec2 size, bool alive)
         {
             Pid = guid;
             Position = pos;
+            Direction = dir;
             Size = size;
             Alive = alive;
         }
