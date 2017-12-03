@@ -44,19 +44,41 @@ namespace server
             thread.Start();
         }
 
-        public Guid RegisterPlayer(int port, string username)
+        public Guid RegisterPlayer(Uri endpoint, string username)
         {
+            Console.WriteLine("Trying to register new player at " + endpoint);
             if (clients.Count >= Program.numPlayers || clients.ContainsKey(username))
                 return Guid.Empty;
 
-            string endpoint = "tcp://localhost:" + port.ToString() + "/GameClient";
-            IGameClient clientConnection = (IGameClient)Activator.GetObject(typeof(IGameClient), endpoint);
+            IGameClient clientConnection = (IGameClient)Activator.GetObject(
+                typeof(IGameClient), endpoint.AbsoluteUri);
+
+            Console.WriteLine("AbsoluteUri: " + endpoint.AbsoluteUri);
+
+            if (clientConnection != null)
+                Console.WriteLine("\tGot remote object.");
+            else
+                Console.WriteLine("\tFailed to get remote object.");
+
+            foreach (IGameClient peer in clients.Values) {
+                // register new peer on existing clients
+                Console.Write("\tRegister " + endpoint.AbsoluteUri);
+                Console.WriteLine(" on " + peer.GetUri());
+                peer.RegisterNewClient(endpoint);
+
+                // register existing clients on new peer
+                Console.Write("\tRegister " + peer.GetUri());
+                Console.WriteLine(" on " + clientConnection.GetUri());
+                clientConnection.RegisterNewClient(peer.GetUri());
+            }
+
             Guid clientGuid = Guid.NewGuid();
 
             clients.Add(username, clientConnection);
             clientNames.Add(clientGuid, username);
 
             Console.WriteLine("New client \"(" + username + ")\" connected at " + endpoint);
+            Console.WriteLine(clientConnection.GetUri());
 
             if (clients.Count == Program.numPlayers)
             {
@@ -108,32 +130,6 @@ namespace server
             string playerName = clientNames[pid];
             playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
             Console.WriteLine(String.Format("INPUT from {0}: {1} {2}", playerName, keyValue, isKeyDown));
-        }
-
-        public void SendMessage(Guid pid, string msg)
-        {
-            if (msg.Trim().Length > 0)
-            {
-                Message message = new Message(clientNames[pid], msg);
-                Console.WriteLine(message.ToString());
-                messages.Add(message);
-
-                Thread thread = new Thread(() => BroadcastMessage(clients.Values, message));
-                thread.Start();
-            }
-        }
-
-        public List<Message> GetMessageHistory()
-        {
-            return messages;
-        }
-
-        private void BroadcastMessage(ICollection<IGameClient> clients, Message msg)
-        {
-            foreach (IGameClient client in clients)
-            {
-                client.SendMessage(msg);
-            }
         }
     }
 }

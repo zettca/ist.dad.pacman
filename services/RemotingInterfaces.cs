@@ -41,15 +41,17 @@ namespace services
 
     public interface IGameServer // Client >> Server
     {
-        Guid RegisterPlayer(int port, string username);
+        Guid RegisterPlayer(Uri endpoint, string username);
         void SendKey(Guid from, int keyValue, bool isKeyDown);
-        void SendMessage(Guid from, string msg);
-        List<Message> GetMessageHistory();
     }
 
-    public interface IGameClient // Server > Client
+    public interface IGameClient // Server > Client; Client -> Client
     {
         void SendGameState(IGameState state); // TODO: Marshall some GameState
         void SendMessage(Message message);
+
+        // used by server to broadcast new clients
+        void RegisterNewClient(Uri peerClientObjectEndpoint);
+        Uri GetUri();
     }
 }

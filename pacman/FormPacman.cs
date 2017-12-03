@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
+using System.Threading;
 using System.Windows.Forms;
 
 
@@ -18,6 +19,8 @@ namespace pacman
         string username;
         IGameServer server;
         Guid guid; // identifies the player on the server
+        private PacmanClientService peer;
+        private List<IGameClient> peers = new List<IGameClient>();
 
         // direction player is moving in. Only one will be true
         bool goup, godown, goleft, goright;
@@ -94,7 +97,10 @@ namespace pacman
         {
             if (e.KeyCode == Keys.Enter)
             {
-                server.SendMessage(guid, tbMsg.Text);
+                services.Message msg = new services.Message(username, tbMsg.Text);
+                BroadcastMessage(msg);
+                AddMessage(msg);
+
                 tbMsg.Clear();
                 tbMsg.Enabled = false;
                 this.Focus();
@@ -103,20 +109,25 @@ namespace pacman
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
             TcpChannel channel = new TcpChannel(0);
             ChannelServices.RegisterChannel(channel, false);
-
-            PacmanClientService service = new PacmanClientService();
-            RemotingServices.Marshal(service, "GameClient",
-                typeof(PacmanClientService));
 
             // Get port that was automatically generated
             int port = new Uri(((ChannelDataStore)channel.ChannelData).ChannelUris[0]).Port;
 
+            string objName = "GameClient";
+            Uri endpoint = new Uri("tcp://localhost:" + port.ToString() + "/" + objName);
+
+            peer = new PacmanClientService(endpoint, username);
+            RemotingServices.Marshal(peer, objName, typeof(PacmanClientService));
+
+            Console.WriteLine("Created PacmanClientService at " + endpoint.AbsoluteUri);
+
             PacmanClientService.form = this;
             server = Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT) as IGameServer;
-            guid = server.RegisterPlayer(port, username);
-            this.AddMessageList(server.GetMessageHistory());
+            guid = server.RegisterPlayer(endpoint, username);
+
             if (guid == Guid.Empty)
             {
                 MessageBox.Show("Server refused connection. Maybe room is already full?"); // TODO: handle with exception? ignore?
@@ -128,15 +139,6 @@ namespace pacman
         public void AddMessage(services.Message msg)
         {
             tbChat.Text += msg.ToString();
-        }
-
-        public void AddMessageList(List<services.Message> msgs)
-        {
-            tbChat.Clear();
-            foreach (var msg in msgs)
-            {
-                AddMessage(msg);
-            }
         }
 
         public void DrawGame(PacmanGameState gameState)
@@ -220,19 +222,47 @@ namespace pacman
                 pic.Image = img;
             }
         }
+
+
+        private void BroadcastMessage(services.Message msg)
+        {
+            foreach (IGameClient peer in peers)
+            {
+                string peerName = ((PacmanClientService)peer).username;
+                Console.WriteLine("Message from " + username + " to " + peerName);
+
+                Thread thread = new Thread(() => peer.SendMessage(msg));
+                thread.Start();
+            }
+        }
+
+        internal void AddPeer(IGameClient peer)
+        {
+            peers.Add(peer);
+        }
     }
 
     delegate void GameHandler(PacmanGameState state);
     delegate void MessageHandler(services.Message msg);
-    delegate void MessageListHandler(List<services.Message> msgs);
 
     public class PacmanClientService : MarshalByRefObject, IGameClient
     {
         public static FormPacman form;
+        public string username { get; private set; }
+        private Uri endpoint;
 
-        public PacmanClientService()
+        public PacmanClientService(Uri endpoint, string username)
         {
+            this.username = username;
+            this.endpoint = endpoint;
+        }
 
+        public void RegisterNewClient(Uri peerClientObjectEndpoint)
+        {
+            IGameClient peer = (IGameClient)Activator.GetObject(typeof(IGameClient),
+                peerClientObjectEndpoint.AbsoluteUri);
+
+            form.AddPeer(peer);
         }
 
         public void SendGameState(IGameState state)
@@ -245,6 +275,11 @@ namespace pacman
         public void SendMessage(services.Message msg)
         {
             form.Invoke(new MessageHandler(form.AddMessage), msg);
+        }
+
+        public Uri GetUri()
+        {
+            return endpoint;
         }
     }
 }
