@@ -27,6 +27,7 @@ namespace services
     public class PacmanGameState : IGameState
     {
         const int SPEED = 8, SIZE = 30;
+        const int TILE_SIZE = 40;
 
         private List<PlayerData> playerData;
         private List<EntityData> ghostData;
@@ -41,7 +42,9 @@ namespace services
         private Random rnd = new Random();
         private Vec2 NewRandomVector(int maxX, int maxY)
         {
-            return new Vec2(rnd.Next(maxX), rnd.Next(maxY));
+            return new Vec2(
+                TILE_SIZE + rnd.Next((maxX - TILE_SIZE) / TILE_SIZE) * TILE_SIZE,
+                TILE_SIZE + rnd.Next((maxY - TILE_SIZE) / TILE_SIZE) * TILE_SIZE);
         }
 
         public PacmanGameState(List<Guid> playerIDs, int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
@@ -62,7 +65,7 @@ namespace services
                 ghostData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(SIZE, SIZE)));
 
             for (int i = 0; i < numFoods; i++)
-                foodData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(20, 20)));
+                foodData.Add(new EntityData(NewRandomVector(windowX, windowY), new Vec2(SIZE, SIZE)));
         }
 
         public PlayerData GetPlayer(Guid pid)

@@ -160,7 +160,7 @@ namespace pacman
             //AddMessage(new services.Message("Debug", gameState.GhostData.Count.ToString()));
             foreach (var food in gameState.FoodData)
             {
-                DrawStatic(food, Properties.Resources.coin);
+                DrawStatic(food, Properties.Resources.cccc);
             }
 
         }
