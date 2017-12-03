@@ -15,12 +15,13 @@ namespace pacman
 {
     public partial class FormPacman : Form
     {
-        const string SERVER_ENDPOINT = "tcp://localhost:8086/OGPGameServer";
-        string username;
+        private string serverEndpoint;
+        private string username;
         IGameServer server;
         Guid guid; // identifies the player on the server
         private PacmanClientService peer;
         private List<IGameClient> peers = new List<IGameClient>();
+        Uri uri;
 
         // direction player is moving in. Only one will be true
         bool goup, godown, goleft, goright;
@@ -32,11 +33,14 @@ namespace pacman
             imgUp = Properties.Resources.Up;
 
 
-        public FormPacman(string username)
+        public FormPacman(Uri uri, string username, int msec, string serverEndpoint)
         {
             InitializeComponent();
             this.username = username;
-            this.Text = username + " - Pacman Client";
+            this.Text = username + " - Pacman Client at " + uri;
+            this.uri = uri;
+            // msec not needed yet.
+            this.serverEndpoint = serverEndpoint;
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -109,24 +113,16 @@ namespace pacman
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
-            TcpChannel channel = new TcpChannel(0);
-            ChannelServices.RegisterChannel(channel, false);
-
-            // Get port that was automatically generated
-            int port = new Uri(((ChannelDataStore)channel.ChannelData).ChannelUris[0]).Port;
-
-            string objName = "GameClient";
-            Uri endpoint = new Uri("tcp://localhost:" + port.ToString() + "/" + objName);
-
-            peer = new PacmanClientService(endpoint, username);
+            peer = new PacmanClientService(uri, username);
+            string objName = uri.AbsolutePath.Replace("/", "");
             RemotingServices.Marshal(peer, objName, typeof(PacmanClientService));
 
-            Console.WriteLine("Created PacmanClientService at " + endpoint.AbsoluteUri);
+            Console.WriteLine("Created PacmanClientService at " + uri.AbsoluteUri);
 
             PacmanClientService.form = this;
-            server = Activator.GetObject(typeof(IGameServer), SERVER_ENDPOINT) as IGameServer;
-            guid = server.RegisterPlayer(endpoint, username);
+            server = Activator.GetObject(typeof(IGameServer), serverEndpoint) as IGameServer;
+
+            guid = server.RegisterPlayer(uri, username);
 
             if (guid == Guid.Empty)
             {
