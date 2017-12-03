@@ -90,7 +90,6 @@ namespace server
 
         private void GameInstanceThread()
         {
-            const int MS_PER_ROUND = 100;
             while (true)
             {
                 gameInstance.ApplyTransitions(playerActions);
@@ -101,7 +100,7 @@ namespace server
                 Thread thread = new Thread(ts);
                 thread.Start();
 
-                Thread.Sleep(MS_PER_ROUND);
+                Thread.Sleep(Program.msec);
             }
         }
 
