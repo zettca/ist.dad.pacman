@@ -136,6 +136,9 @@ namespace services
 
         private void ProcessCollision(PlayerData player)
         {
+            if (player.Alive == false)
+                return;
+
             foreach (var ghost in ghostData)
             {
                 if (DoBoxesIntersect(player, ghost))
@@ -146,7 +149,7 @@ namespace services
 
             foreach (var food in foodData)
             {
-                if (DoBoxesIntersect(player, food))
+                if (food.Alive && DoBoxesIntersect(player, food))
                 {
                     food.Alive = false;
                     player.Score += 10;

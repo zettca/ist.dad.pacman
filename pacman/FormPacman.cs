@@ -188,6 +188,13 @@ namespace pacman
             {
                 CreatePictureForEntity(entity, image);
             }
+            else if (entity.Alive == false)
+            {
+                foreach (Control c in pics)
+                {
+                    c.Hide();
+                }
+            }
         }
 
         private Image GetNewDirectionImage(Vec2 dir)
