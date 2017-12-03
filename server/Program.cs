@@ -57,7 +57,8 @@ namespace server
             string host = uri.Host;
             Console.WriteLine("Current Host:\t{0}", host);
 
-            string objName = uri.AbsolutePath.Replace("/", "");
+            string objName = endpoint.AbsolutePath.Replace("/", "");
+            Console.WriteLine("objName:\t{0}", objName);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(ServerGameService),

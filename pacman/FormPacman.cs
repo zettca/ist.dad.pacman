@@ -115,9 +115,11 @@ namespace pacman
         {
             peer = new PacmanClientService(uri, username);
             string objName = uri.AbsolutePath.Replace("/", "");
+            Console.WriteLine("objName:\t{0}", objName);
             RemotingServices.Marshal(peer, objName, typeof(PacmanClientService));
 
             Console.WriteLine("Created PacmanClientService at " + uri.AbsoluteUri);
+            Console.WriteLine("Connecting to server at " + serverEndpoint);
 
             PacmanClientService.form = this;
             server = Activator.GetObject(typeof(IGameServer), serverEndpoint) as IGameServer;
