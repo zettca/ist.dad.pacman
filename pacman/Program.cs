@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Windows.Forms;
@@ -26,6 +27,12 @@ namespace pacman
                 Console.WriteLine("arg: {0}", arg);
             }
 
+            List<string[]> lines = new List<string[]>();
+            string line;
+            while ((line = Console.ReadLine()) != null)
+            {
+                if (line.Trim() != "") lines.Add(line.Split(' '));
+            }
 
             Uri endpoint;
             if (args.Length > 0)
@@ -59,7 +66,7 @@ namespace pacman
             string host = uri.Host;
             Console.WriteLine("Current Host:\t{0}", host);
 
-            Application.Run(new FormPacman(endpoint, username, msec, server));
+            Application.Run(new FormPacman(endpoint, username, msec, server, lines));
         }
 
     }

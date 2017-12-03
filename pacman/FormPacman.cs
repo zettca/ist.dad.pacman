@@ -18,8 +18,10 @@ namespace pacman
         private List<IGameClient> peers = new List<IGameClient>();
         Uri uri;
 
-        // direction player is moving in. Only one will be true
-        bool goup, godown, goleft, goright;
+        private bool goup, godown, goleft, goright;
+        private bool readingFromFile = false;
+        private List<string[]> stdinLines;
+        private int numRounds = 0;
 
         Image
             imgLeft = Properties.Resources.Left,
@@ -27,8 +29,7 @@ namespace pacman
             imgDown = Properties.Resources.Down,
             imgUp = Properties.Resources.Up;
 
-
-        public FormPacman(Uri uri, string username, int msec, string serverEndpoint)
+        public FormPacman(Uri uri, string username, int msec, string serverEndpoint, List<string[]> lines)
         {
             InitializeComponent();
             this.username = username;
@@ -36,6 +37,12 @@ namespace pacman
             this.uri = uri;
             // msec not needed yet.
             this.serverEndpoint = serverEndpoint;
+
+            if (lines.Count > 0)
+            {
+                readingFromFile = true;
+                stdinLines = lines;
+            }
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -136,6 +143,17 @@ namespace pacman
 
         public void DrawGame(PacmanGameState gameState)
         {
+            numRounds++;
+            if (readingFromFile)
+            {
+                string[] line = stdinLines[0];
+                stdinLines.RemoveAt(0);
+                if (Int32.Parse(line?[0]) == numRounds)
+                {
+                    server.SendKey(guid, Int32.Parse(line[1]), Convert.ToBoolean(line[2]));
+                }
+            }
+
             foreach (var player in gameState.PlayerData)
             {
                 DrawPacman(player);
@@ -266,7 +284,6 @@ namespace pacman
 
         public void SendGameState(IGameState state)
         {
-            // TODO: handle conversion and error catching
             PacmanGameState gameState = (PacmanGameState)state;
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
         }
