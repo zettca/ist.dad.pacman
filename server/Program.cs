@@ -10,7 +10,7 @@ namespace server
         public static Uri endpoint;
         public static int msec;
         public static int numPlayers;
-        public static string gameName;
+        public static string gameName = "pacman";
 
         [STAThread]
         static void Main(string[] args)
@@ -31,12 +31,11 @@ namespace server
                 endpoint = new Uri(args.Length > 0 ? args[0] : "tcp://localhost:8086/OGPGameServer");
                 msec = (args.Length > 1) ? Int32.Parse(args[1]) : 100;
                 numPlayers = (args.Length > 2) ? Int32.Parse(args[2]) : 2;
-                gameName = (args.Length > 3) ? args[3] : "DAD-MAN";
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                Console.WriteLine("Expected arguments: <url> <msec> <numPlayers> <gameName>");
+                Console.WriteLine("Expected arguments: <url> <msec> <numPlayers>");
                 Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
                 Environment.Exit(-1);
