@@ -212,6 +212,13 @@ namespace services
             Size = size;
             Alive = alive;
         }
+
+        public override string ToString()
+        {
+            return this.GetType().ToString() + " at " + position + "\t"
+                + "Size: " + size + "\t"
+                + "Alive: " + alive + "\t";
+        }
     }
 
     public class StateMachine
