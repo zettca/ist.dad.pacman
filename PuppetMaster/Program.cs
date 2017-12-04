@@ -74,8 +74,8 @@ namespace PuppetMaster
                             break;
 
                         case "LocalState":
-                            if (parameters.Length.Equals(1)){
-                                new Thread(() => LocalState(parameters[1]));
+                            if (parameters.Length.Equals(2)){
+                                new Thread(() => LocalState(parameters[1], parameters[2]));
                             }
                             else
                                 Console.WriteLine("Expected arguments: PID round_id");
@@ -93,27 +93,27 @@ namespace PuppetMaster
             }
         }
 
-        private static void Wait(string v)
+        private static void Wait(string ms)
         {
             throw new NotImplementedException();
         }
 
-        private static void LocalState(string v)
+        private static void LocalState(string pid, string round_id)
         {
             throw new NotImplementedException();
         }
 
-        private static void InjectDelay(string v1, string v2)
+        private static void InjectDelay(string src_pid, string dst_pid)
         {
             throw new NotImplementedException();
         }
 
-        private static void Unfreeze(string v)
+        private static void Unfreeze(string pid)
         {
             throw new NotImplementedException();
         }
 
-        private static void Freeze(string v)
+        private static void Freeze(string pid)
         {
             throw new NotImplementedException();
         }
@@ -123,17 +123,17 @@ namespace PuppetMaster
             throw new NotImplementedException();
         }
 
-        private static void Crash(string v)
+        private static void Crash(string pid)
         {
             throw new NotImplementedException();
         }
 
-        private static void StartServer(string v1, string v2, string v3, string v4, string v5)
+        private static void StartServer(string pid, string pcs_url, string server_url, string msec, string num_players)
         {
             throw new NotImplementedException();
         }
 
-        private static void StartClient(string v1, string v2, string v3, string v4, string v5, string v6)
+        private static void StartClient(string pid, string pcs_url, string client_url, string msec, string num_players, string file_name)
         {
             throw new NotImplementedException();
         }
