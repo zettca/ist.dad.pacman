@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "server", "server\server.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "services", "services\services.csproj", "{30FC70B2-AEFB-40A0-B6D9-23CF0E4416B1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{30FC70B2-AEFB-40A0-B6D9-23CF0E4416B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30FC70B2-AEFB-40A0-B6D9-23CF0E4416B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30FC70B2-AEFB-40A0-B6D9-23CF0E4416B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
