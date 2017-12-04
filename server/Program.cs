@@ -50,14 +50,16 @@ namespace server
             TcpChannel channel = new TcpChannel(endpoint.Port);
             ChannelServices.RegisterChannel(channel, false);
 
-            // get channel host
-            ChannelDataStore data = (ChannelDataStore)channel.ChannelData;
-            Uri uri = new Uri(data.ChannelUris[0]);
-            string host = uri.Host;
-            Console.WriteLine("Current Host:\t{0}", host);
-
             string objName = endpoint.AbsolutePath.Replace("/", "");
             Console.WriteLine("objName:\t{0}", objName);
+            Console.WriteLine();
+            // get channel host
+            ChannelDataStore data = (ChannelDataStore)channel.ChannelData;
+            foreach (string uriStr in data.ChannelUris)
+            {
+                Console.WriteLine("Server at:\t{0}/{1}", uriStr, objName);
+            }
+            Console.WriteLine();
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(ServerGameService),
