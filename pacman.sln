@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2008
+VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pacman", "pacman\pacman.csproj", "{ECE5A838-E181-493A-B9A2-6ADD01DE37F6}"
 EndProject
@@ -10,6 +10,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "services", "services\services.csproj", "{30FC70B2-AEFB-40A0-B6D9-23CF0E4416B1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5C48AAA2-18EE-4B81-BD8D-A78461E37264} = {5C48AAA2-18EE-4B81-BD8D-A78461E37264}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCS", "PCS\PCS.csproj", "{5C48AAA2-18EE-4B81-BD8D-A78461E37264}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +38,10 @@ Global
 		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B22F7E8F-078B-4980-8BB0-A46921DEDBBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C48AAA2-18EE-4B81-BD8D-A78461E37264}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C48AAA2-18EE-4B81-BD8D-A78461E37264}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C48AAA2-18EE-4B81-BD8D-A78461E37264}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C48AAA2-18EE-4B81-BD8D-A78461E37264}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
