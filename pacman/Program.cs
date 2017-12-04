@@ -12,7 +12,7 @@ namespace pacman
         /// <summary>
         /// The main entry point for the application.
         /// 
-        /// args: username client_endpoint MSEC_PER_ROUND server_endpoint
+        /// args: server_endpoint username client_endpoint MSEC_PER_ROUND
         /// </summary>
         [STAThread]
         static void Main(string[] args)
@@ -34,10 +34,12 @@ namespace pacman
                 if (line.Trim() != "") lines.Add(line.Split(' '));
             }
 
+            string serverEndpoint = (args.Length > 0) ? args[0] : DEFAULT_SERVER;
+
             Uri endpoint;
             if (args.Length > 0)
             {
-                endpoint = new Uri(args[0]);
+                endpoint = new Uri(args[2]);
             }
             else
             {
@@ -47,13 +49,12 @@ namespace pacman
             }
 
             string username = (args.Length > 1) ? args[1] : endpoint.Port.ToString("D4");
-            int msec = (args.Length > 2) ? Int32.Parse(args[2]) : 100;
-            string server = (args.Length > 3) ? args[3] : DEFAULT_SERVER;
+            int msec = (args.Length > 3) ? Int32.Parse(args[3]) : 100;
 
             Console.WriteLine("URI:\t{0}", endpoint);
             Console.WriteLine("PID:\t{0}", username);
             Console.WriteLine("MSEC:\t{0}", msec);
-            Console.WriteLine("SERV:\t{0}", server);
+            Console.WriteLine("SERV:\t{0}", serverEndpoint);
             Console.WriteLine("Path:\t{0}", endpoint.AbsolutePath);
             Console.WriteLine("Requested Host:\t{0}", endpoint.Host);
 
@@ -66,7 +67,7 @@ namespace pacman
             string host = uri.Host;
             Console.WriteLine("Current Host:\t{0}", host);
 
-            Application.Run(new FormPacman(endpoint, username, msec, server, lines));
+            Application.Run(new FormPacman(endpoint, username, msec, serverEndpoint, lines));
         }
 
     }
