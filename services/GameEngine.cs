@@ -31,53 +31,60 @@ namespace services
         const int TILE_SIZE = 40;
 
         private int windowX, windowY;
-        private bool isGameOver = false;
 
         private List<PlayerData> playerData;
         private List<EntityData> ghostData;
         private List<EntityData> foodData;
+        private List<EntityData> wallData;
 
         public List<PlayerData> PlayerData { get => playerData; }
         public List<EntityData> GhostData { get => ghostData; }
         public List<EntityData> FoodData { get => foodData; }
+        public List<EntityData> WallData { get => wallData; }
 
-        private Random rnd = new Random((int)DateTime.Now.Ticks);
-        private Vec2 NewRandomPosition(int maxX, int maxY)
-        {
-            return new Vec2(
-                TILE_SIZE + rnd.Next((maxX - TILE_SIZE) / TILE_SIZE) * TILE_SIZE,
-                TILE_SIZE + rnd.Next((maxY - TILE_SIZE) / TILE_SIZE) * TILE_SIZE);
-        }
+        public bool HasEnded => !AnyPlayerAlive(playerData) || !AnyEntityAlive(foodData);
 
-        private Vec2 NewRandomDir()
-        {
-            return new Vec2(rnd.Next(-1, 2), rnd.Next(-1, 2));
-        }
-
-        public PacmanGameState(List<Guid> playerIDs, int numPlayers, int numGhosts, int numFoods, int windowX, int windowY)
+        public PacmanGameState(List<Guid> playerIDs, int numPlayers, int windowX, int windowY)
         {
             playerData = new List<PlayerData>();
             ghostData = new List<EntityData>();
             foodData = new List<EntityData>();
+            wallData = new List<EntityData>();
             this.windowX = windowX;
             this.windowY = windowY;
 
             for (int i = 0; i < numPlayers; i++)
+            {
                 playerData.Add(
                     new PlayerData(playerIDs[i],
                         new Vec2(8, TILE_SIZE * (i + 1)),
                         new Vec2(SIZE, SIZE)));
+            }
 
-            for (int i = 0; i < numGhosts; i++)
-                ghostData.Add(new EntityData(NewRandomPosition(windowX, windowY), NewRandomDir(), new Vec2(SIZE, SIZE)));
+            DrawStaticMap();
+        }
 
-            for (int i = 0; i < numFoods; i++)
-                foodData.Add(new EntityData(NewRandomPosition(windowX, windowY), new Vec2(SIZE / 2, SIZE / 2)));
+        private void DrawStaticMap()
+        {
+            ghostData.Add(new EntityData(new Vec2(200, 20), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
+            ghostData.Add(new EntityData(new Vec2(260, 200), new Vec2(0, 1), new Vec2(SIZE, SIZE)));
+            ghostData.Add(new EntityData(new Vec2(260, 20), new Vec2(-1, -1), new Vec2(SIZE, SIZE)));
+
+            wallData.Add(new EntityData(new Vec2(60, 0), new Vec2(10, 100)));
+            wallData.Add(new EntityData(new Vec2(200, 60), new Vec2(60, 10)));
+
+            for (int i = 1; i < 5; i++)
+            {
+                for (int j = 1; j < 5; j++)
+                {
+                    foodData.Add(new EntityData(new Vec2(20 * 3 * i, 20 * 4 * j), new Vec2(SIZE / 2, SIZE / 2)));
+                }
+            }
         }
 
         public PlayerData GetPlayer(Guid pid)
         {
-            foreach (var player in this.playerData)
+            foreach (var player in playerData)
             {
                 if (player.Pid == pid) return player;
             }
@@ -107,8 +114,6 @@ namespace services
             {
                 ghost.Position = UpdateGhostPosition(ghost);
             }
-
-            isGameOver = IsGameOver();
 
             return this;
         }
@@ -151,10 +156,8 @@ namespace services
                 ghost.Position.X + ghost.Direction.X * SPEED,
                 ghost.Position.Y + ghost.Direction.Y * SPEED);
 
-            if (pos.X <= 0) ghost.Direction.X = 1;
-            else if (pos.Y <= 0) ghost.Direction.Y = 1;
-            else if (pos.X >= windowX) ghost.Direction.X = -1;
-            else if (pos.Y >= windowY) ghost.Direction.Y = -1;
+            if (pos.X <= 0 || pos.X >= windowX) ghost.Direction.X *= -1;
+            if (pos.Y <= 0 || pos.Y >= windowY) ghost.Direction.Y *= -1;
 
             return pos;
         }
@@ -186,28 +189,29 @@ namespace services
                     player.Score += 10;
                 }
             }
+
+            foreach (var wall in wallData)
+            {
+
+            }
         }
 
-        private bool IsGameOver()
+        private bool AnyEntityAlive(List<EntityData> entities)
         {
-            bool playersAlive = false;
-            foreach (var player in playerData)
+            foreach (var ent in entities)
             {
-                if (player.Alive)
-                {
-                    playersAlive = true;
-                    break;
-                }
+                if (ent.Alive) return true;
             }
+            return false;
+        }
 
-            if (!playersAlive) return true;
-
-            foreach (var food in foodData)
+        private bool AnyPlayerAlive(List<PlayerData> players)
+        {
+            foreach (var ent in players)
             {
-                if (food.Alive) return false;
+                if (ent.Alive) return true;
             }
-
-            return true;
+            return false;
         }
 
         public override string ToString()
@@ -219,11 +223,6 @@ namespace services
                 output += Environment.NewLine;
             }
             return output;
-        }
-
-        public bool HasEnded()
-        {
-            return isGameOver;
         }
     }
 
@@ -252,7 +251,7 @@ namespace services
         private bool alive;
         private Vec2 position, direction, size;
 
-        public Guid Pid { get => pid; set => pid = value; } // internal modifier ?
+        public Guid Pid { get => pid; set => pid = value; }
         public bool Alive { get => alive; set => alive = value; }
         public Vec2 Position { get => position; set => position = value; }
         public Vec2 Direction { get => direction; set => direction = value; }
@@ -275,9 +274,8 @@ namespace services
 
         public override string ToString()
         {
-            return this.GetType().ToString() + " at " + position + "\t"
-                + "Size: " + size + "\t"
-                + "Alive: " + alive + "\t";
+            return String.Format("{0} at {1}\tSize: {2}\tAlive: {3}",
+                GetType().ToString(), position, size, alive);
         }
     }
 

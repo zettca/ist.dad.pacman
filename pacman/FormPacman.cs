@@ -282,6 +282,11 @@ namespace pacman
             form.AddPeer(peer);
         }
 
+        public void SendGameStart(IGameState state, List<Uri> peerEndpoints)
+        {
+            SendGameState(state);
+        }
+
         public void SendGameState(IGameState state)
         {
             PacmanGameState gameState = (PacmanGameState)state;

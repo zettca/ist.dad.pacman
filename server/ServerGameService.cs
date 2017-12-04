@@ -29,7 +29,7 @@ namespace server
             switch (gameId)
             {
                 case "pacman":
-                    return new PacmanGameState(clientNames.Keys.ToList(), Program.numPlayers, 2, 16, 300, 300);
+                    return new PacmanGameState(clientNames.Keys.ToList(), Program.numPlayers, 300, 300);
                 default:
                     return null;
             }
@@ -92,7 +92,7 @@ namespace server
         {
             ThreadStart ts = new ThreadStart(SendGameState);
             Thread thread;
-            while (!gameInstance.CurrentState.HasEnded())
+            while (!gameInstance.CurrentState.HasEnded)
             {
                 gameInstance.ApplyTransitions(playerActions);
                 playerActions.Clear();
