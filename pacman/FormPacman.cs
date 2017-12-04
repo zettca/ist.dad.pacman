@@ -123,7 +123,7 @@ namespace pacman
             Console.WriteLine("Created PacmanClientService at " + uri.AbsoluteUri);
             Console.WriteLine("Connecting to server at " + serverEndpoint);
 
-            PacmanClientService.form = this;
+            peer.form = this;
             server = Activator.GetObject(typeof(IGameServer), serverEndpoint) as IGameServer;
 
             guid = server.RegisterPlayer(uri, username);
@@ -139,6 +139,11 @@ namespace pacman
         public void AddMessage(services.Message msg)
         {
             tbChat.Text += msg.ToString();
+        }
+
+        public void UpdateGame(PacmanGameState gameState)
+        {
+            DrawGame(gameState);
         }
 
         public void DrawGame(PacmanGameState gameState)
@@ -264,7 +269,7 @@ namespace pacman
 
     public class PacmanClientService : MarshalByRefObject, IGameClient
     {
-        public static FormPacman form;
+        public FormPacman form;
         public string username { get; private set; }
         private Uri endpoint;
 
@@ -284,13 +289,12 @@ namespace pacman
 
         public void SendGameStart(IGameState state, List<Uri> peerEndpoints)
         {
-            SendGameState(state);
+            form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
         }
 
         public void SendGameState(IGameState state)
         {
-            PacmanGameState gameState = (PacmanGameState)state;
-            form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
+            form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameState)state);
         }
 
         public void SendMessage(services.Message msg)
@@ -298,10 +302,7 @@ namespace pacman
             form.Invoke(new MessageHandler(form.AddMessage), msg);
         }
 
-        public Uri GetUri()
-        {
-            return endpoint;
-        }
+        public Uri Uri => endpoint;
 
         public void SendScoreboard(Dictionary<Guid, int> scoreboard)
         {

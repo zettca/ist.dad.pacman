@@ -66,7 +66,7 @@ namespace services
 
         private void DrawStaticMap()
         {
-            ghostData.Add(new EntityData(new Vec2(200, 20), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
+            ghostData.Add(new EntityData(new Vec2(200, 120), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
             ghostData.Add(new EntityData(new Vec2(260, 200), new Vec2(0, 1), new Vec2(SIZE, SIZE)));
             ghostData.Add(new EntityData(new Vec2(260, 20), new Vec2(-1, -1), new Vec2(SIZE, SIZE)));
 
@@ -77,7 +77,7 @@ namespace services
             {
                 for (int j = 1; j < 5; j++)
                 {
-                    foodData.Add(new EntityData(new Vec2(20 * 3 * i, 20 * 4 * j), new Vec2(SIZE / 2, SIZE / 2)));
+                    foodData.Add(new EntityData(new Vec2(20 * 3 * i, 20 * 3 * j), new Vec2(SIZE / 2, SIZE / 2)));
                 }
             }
         }

@@ -49,6 +49,8 @@ namespace services
 
     public interface IGameClient // Server > Client; Client -> Client
     {
+        Uri Uri { get; }
+
         void SendScoreboard(Dictionary<Guid, int> scoreboard);
         void SendGameStart(IGameState state, List<Uri> peerEndpoints);
         void SendGameState(IGameState state);
@@ -56,6 +58,5 @@ namespace services
 
         // used by server to broadcast new clients
         void RegisterNewClient(Uri peerClientObjectEndpoint);
-        Uri GetUri();
     }
 }

@@ -6,20 +6,34 @@ using System.Threading;
 
 namespace server
 {
+    struct ServiceClient
+    {
+        public Guid UID;
+        public string Name;
+        public IGameClient Conn;
+
+        public ServiceClient(Guid uid, string username, IGameClient conn)
+        {
+            UID = uid;
+            Name = username;
+            Conn = conn;
+        }
+    }
+
     class ServerGameService : MarshalByRefObject, IGameServer
     {
-        Dictionary<string, IGameClient> clients;
-        Dictionary<Guid, string> clientNames;
+        List<ServiceClient> clients;
         List<Message> messages;
         List<PlayerAction> playerActions;
         StateMachine gameInstance;
 
-        ICollection<IGameClient> ClientConnections { get => clients.Values; }
+        List<Guid> ClientIds { get => clients.Select((cli) => cli.UID).ToList(); }
+        List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
+        List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
 
         ServerGameService()
         {
-            clients = new Dictionary<string, IGameClient>();
-            clientNames = new Dictionary<Guid, string>();
+            clients = new List<ServiceClient>();
             messages = new List<Message>();
             playerActions = new List<PlayerAction>();
         }
@@ -29,7 +43,7 @@ namespace server
             switch (gameId)
             {
                 case "pacman":
-                    return new PacmanGameState(clientNames.Keys.ToList(), Program.numPlayers, 300, 300);
+                    return new PacmanGameState(ClientIds, Program.numPlayers, 300, 300);
                 default:
                     return null;
             }
@@ -38,16 +52,13 @@ namespace server
         private void StartGame(string gameId)
         {
             gameInstance = new StateMachine(GetInitialGameState(gameId));
-
-            ThreadStart ts = new ThreadStart(GameInstanceThread);
-            Thread thread = new Thread(ts);
-            thread.Start();
+            new Thread(() => GameInstanceThread()).Start();
         }
 
         public Guid RegisterPlayer(Uri endpoint, string username)
         {
             Console.WriteLine("Trying to register new player at " + endpoint);
-            if (clients.Count >= Program.numPlayers || clients.ContainsKey(username))
+            if (clients.Count >= Program.numPlayers || clients.Exists((cli) => cli.Name == username))
                 return Guid.Empty;
 
             IGameClient clientConnection = (IGameClient)Activator.GetObject(
@@ -60,25 +71,25 @@ namespace server
             else
                 Console.WriteLine("\tFailed to get remote object.");
 
-            foreach (IGameClient peer in clients.Values) {
+            foreach (var peer in clients)
+            {
                 // register new peer on existing clients
                 Console.Write("\tRegister " + endpoint.AbsoluteUri);
-                Console.WriteLine(" on " + peer.GetUri());
-                peer.RegisterNewClient(endpoint);
+                Console.WriteLine(" on " + peer.Conn.Uri);
+                peer.Conn.RegisterNewClient(endpoint);
 
                 // register existing clients on new peer
-                Console.Write("\tRegister " + peer.GetUri());
-                Console.WriteLine(" on " + clientConnection.GetUri());
-                clientConnection.RegisterNewClient(peer.GetUri());
+                Console.Write("\tRegister " + peer.Conn.Uri);
+                Console.WriteLine(" on " + clientConnection.Uri);
+                clientConnection.RegisterNewClient(peer.Conn.Uri);
             }
 
             Guid clientGuid = Guid.NewGuid();
 
-            clients.Add(username, clientConnection);
-            clientNames.Add(clientGuid, username);
+            clients.Add(new ServiceClient(clientGuid, username, clientConnection));
 
             Console.WriteLine("New client \"(" + username + ")\" connected at " + endpoint);
-            Console.WriteLine(clientConnection.GetUri());
+            Console.WriteLine(clientConnection.Uri);
 
             if (clients.Count == Program.numPlayers)
             {
@@ -90,25 +101,18 @@ namespace server
 
         private void GameInstanceThread()
         {
-            ThreadStart ts = new ThreadStart(SendGameState);
-            Thread thread;
             while (!gameInstance.CurrentState.HasEnded)
             {
                 gameInstance.ApplyTransitions(playerActions);
                 playerActions.Clear();
                 gameInstance.ApplyTick();
 
-                thread = new Thread(ts);
-                thread.Start();
-
+                new Thread(() => SendGameState()).Start();
                 Thread.Sleep(Program.msec);
             }
 
             Console.WriteLine("Game has ended!");
-
-            ts = new ThreadStart(GameEnd);
-            thread = new Thread(ts);
-            thread.Start();
+            new Thread(() => GameEnd()).Start();
         }
 
         private void GameEnd()
@@ -121,25 +125,24 @@ namespace server
                 scores.Add(player.Pid, player.Score);
             }
 
-            foreach (IGameClient client in clients.Values)
+            foreach (var client in clients)
             {
-                client.SendScoreboard(null);
+                client.Conn.SendScoreboard(null);
             }
         }
 
         private void SendGameState()
         {
             IGameState gameState = gameInstance.CurrentState;
-            foreach (IGameClient client in clients.Values)
+            foreach (var client in clients)
             {
                 try
                 {
-                    client.SendGameState(gameState);
+                    client.Conn.SendGameState(gameState);
                 }
                 catch (Exception)
                 {
                     Console.WriteLine("Client disconnected!");
-                    clients.Remove(clients.First(pair => pair.Value == client).Key);
                 }
             }
 
@@ -149,9 +152,8 @@ namespace server
 
         public void SendKey(Guid pid, int keyValue, bool isKeyDown)
         {
-            string playerName = clientNames[pid];
             playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
-            Console.WriteLine("INPUT from {0}: {1} {2}", playerName, keyValue, isKeyDown);
+            Console.WriteLine("INPUT from {0}: {1} {2}", pid.ToString().Substring(0, 6), keyValue, isKeyDown);
         }
     }
 }
