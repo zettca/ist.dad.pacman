@@ -143,11 +143,6 @@ namespace pacman
 
         public void UpdateGame(PacmanGameState gameState)
         {
-            DrawGame(gameState);
-        }
-
-        public void DrawGame(PacmanGameState gameState)
-        {
             numRounds++;
             if (readingFromFile)
             {
@@ -157,40 +152,64 @@ namespace pacman
                 {
                     server.SendKey(guid, Int32.Parse(line[1]), Convert.ToBoolean(line[2]));
                 }
+                else if (line?[0] == null)
+                {
+                    readingFromFile = false;
+                }
             }
 
             foreach (var player in gameState.PlayerData)
             {
-                DrawPacman(player);
+                PictureBox pic = panelCanvas.Controls.Find(player.Pid.ToString(), true)[0] as PictureBox;
+                Image img = GetPacmanDirectionImage(player.Direction);
+                pic.Location = new Point(player.Position.X, player.Position.Y);
+                if (!player.Alive) pic.BackColor = Color.Red;
+                if (img != null && pic.Image != img) pic.Image = img;
                 if (player.Pid == guid)
                 {
-                    Control pic = Controls.Find(player.Pid.ToString(), true)[0];
-                    if (player.Alive)
-                    {
-                        pic.BackColor = Color.Green;
-                        labelTitle.Text = player.Position.ToString();
-                    }
-                    else
-                    {
-                        pic.BackColor = Color.Red;
-                        labelTitle.Text = "You're die!";
-                    }
-
+                    labelTitle.Text = player.Position.ToString();
                     labelScore.Text = player.Score.ToString();
                 }
             }
 
             foreach (var ghost in gameState.GhostData)
             {
-                DrawObject(ghost, Properties.Resources.pink_guy);
+                PictureBox pic = panelCanvas.Controls.Find(ghost.Pid.ToString(), true)[0] as PictureBox;
+                pic.Location = new Point(ghost.Position.X, ghost.Position.Y);
             }
 
             foreach (var food in gameState.FoodData)
             {
-                DrawObject(food, Properties.Resources.cccc);
+                PictureBox pic = panelCanvas.Controls.Find(food.Pid.ToString(), true)[0] as PictureBox;
+                if (!food.Alive && pic.Visible) pic.Visible = false;
+            }
+        }
+
+        public void DrawGame(PacmanGameState gameState)
+        {
+            foreach (var player in gameState.PlayerData)
+            {
+                PictureBox pic = CreatePictureForEntity(player, imgLeft);
+                if (player.Pid == guid) pic.BackColor = Color.Gray;
             }
 
+            foreach (var ghost in gameState.GhostData)
+            {
+                CreatePictureForEntity(ghost, Properties.Resources.pink_guy);
+            }
+
+            foreach (var food in gameState.FoodData)
+            {
+                CreatePictureForEntity(food, Properties.Resources.cccc);
+            }
+
+            foreach (var wall in gameState.WallData)
+            {
+                AddMessage(new services.Message("cenas", wall.Position.ToString() + wall.Size.ToString()));
+                CreatePictureForEntity(wall, null);
+            }
         }
+
         private PictureBox CreatePictureForEntity(EntityData entity, Image image)
         {
             PictureBox pic = new PictureBox
@@ -199,24 +218,25 @@ namespace pacman
                 Size = new Size(entity.Size.X, entity.Size.Y),
                 SizeMode = PictureBoxSizeMode.StretchImage,
                 Location = new Point(entity.Position.X, entity.Position.Y),
-                BackColor = Color.Transparent,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = (image != null) ? Color.Transparent : Color.DarkBlue,
                 Image = image,
             };
-            Controls.Add(pic);
+            panelCanvas.Controls.Add(pic);
             return pic;
         }
 
 
         private void DrawObject(EntityData entity, Image image)
         {
-            Control[] pics = Controls.Find(entity.Pid.ToString(), true);
+            Control[] pics = panelCanvas.Controls.Find(entity.Pid.ToString(), true);
             PictureBox pic = (pics.Length == 0) ? CreatePictureForEntity(entity, image) : pics[0] as PictureBox;
 
             pic.Location = new Point(entity.Position.X, entity.Position.Y);
             if (!entity.Alive) pic.Hide();
         }
 
-        private Image GetNewDirectionImage(Vec2 dir)
+        private Image GetPacmanDirectionImage(Vec2 dir)
         {
             if (dir.X > 0) return imgRight;
             if (dir.X < 0) return imgLeft;
@@ -224,20 +244,6 @@ namespace pacman
             if (dir.Y < 0) return imgUp;
 
             return null;
-        }
-
-        private void DrawPacman(PlayerData player)
-        {
-            Control[] pics = Controls.Find(player.Pid.ToString(), true);
-            PictureBox pic = (pics.Length == 0) ? CreatePictureForEntity(player, imgLeft) : pics[0] as PictureBox;
-
-            pic.Location = new Point(player.Position.X, player.Position.Y);
-            pic.BackColor = (player.Alive) ? Color.Transparent : Color.Red;
-            Image img = GetNewDirectionImage(player.Direction);
-            if (img != null && pic.Image != img)
-            {
-                pic.Image = img;
-            }
         }
 
         private void BroadcastMessage(services.Message msg)

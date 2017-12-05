@@ -8,12 +8,14 @@ namespace server
 {
     struct ServiceClient
     {
+        public Uri Uri;
         public Guid UID;
         public string Name;
         public IGameClient Conn;
 
-        public ServiceClient(Guid uid, string username, IGameClient conn)
+        public ServiceClient(Uri endpoint, Guid uid, string username, IGameClient conn)
         {
+            Uri = endpoint;
             UID = uid;
             Name = username;
             Conn = conn;
@@ -27,6 +29,7 @@ namespace server
         List<PlayerAction> playerActions;
         StateMachine gameInstance;
 
+        List<Uri> ClientUris { get => clients.Select((cli) => cli.Uri).ToList(); }
         List<Guid> ClientIds { get => clients.Select((cli) => cli.UID).ToList(); }
         List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
         List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
@@ -86,7 +89,7 @@ namespace server
 
             Guid clientGuid = Guid.NewGuid();
 
-            clients.Add(new ServiceClient(clientGuid, username, clientConnection));
+            clients.Add(new ServiceClient(endpoint, clientGuid, username, clientConnection));
 
             Console.WriteLine("New client \"(" + username + ")\" connected at " + endpoint);
             Console.WriteLine(clientConnection.Uri);
@@ -101,6 +104,8 @@ namespace server
 
         private void GameInstanceThread()
         {
+            new Thread(() => GameStart()).Start();
+
             while (!gameInstance.CurrentState.HasEnded)
             {
                 gameInstance.ApplyTransitions(playerActions);
@@ -113,6 +118,14 @@ namespace server
 
             Console.WriteLine("Game has ended!");
             new Thread(() => GameEnd()).Start();
+        }
+
+        private void GameStart()
+        {
+            foreach (var client in clients)
+            {
+                client.Conn.SendGameStart(gameInstance.CurrentState, ClientUris);
+            }
         }
 
         private void GameEnd()
@@ -133,21 +146,18 @@ namespace server
 
         private void SendGameState()
         {
-            IGameState gameState = gameInstance.CurrentState;
             foreach (var client in clients)
             {
                 try
                 {
-                    client.Conn.SendGameState(gameState);
+                    client.Conn.SendGameState(gameInstance.CurrentState);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    Console.WriteLine("Client disconnected!");
+                    Console.WriteLine(e.Message);
                 }
             }
 
-            //Console.WriteLine("GameState:");
-            //Console.WriteLine(gameState.ToString());
         }
 
         public void SendKey(Guid pid, int keyValue, bool isKeyDown)

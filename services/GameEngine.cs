@@ -18,6 +18,12 @@ namespace services
         public int X { get => x; set => x = value; }
         public int Y { get => y; set => y = value; }
 
+        public void Invert()
+        {
+            X *= -1;
+            Y *= -1;
+        }
+
         public override string ToString()
         {
             return String.Format("({0},{1})", x, y);
@@ -27,7 +33,7 @@ namespace services
     [Serializable]
     public class PacmanGameState : IGameState
     {
-        const int SPEED = 8, SIZE = 30;
+        const int SPEED = 2, SIZE = 30;
         const int TILE_SIZE = 40;
 
         private int windowX, windowY;
@@ -70,8 +76,8 @@ namespace services
             ghostData.Add(new EntityData(new Vec2(260, 200), new Vec2(0, 1), new Vec2(SIZE, SIZE)));
             ghostData.Add(new EntityData(new Vec2(260, 20), new Vec2(-1, -1), new Vec2(SIZE, SIZE)));
 
-            wallData.Add(new EntityData(new Vec2(60, 0), new Vec2(10, 100)));
-            wallData.Add(new EntityData(new Vec2(200, 60), new Vec2(60, 10)));
+            wallData.Add(new EntityData(new Vec2(80, 40), new Vec2(30, 160)));
+            wallData.Add(new EntityData(new Vec2(160, 80), new Vec2(140, 30)));
 
             for (int i = 1; i < 5; i++)
             {
@@ -136,28 +142,41 @@ namespace services
             }
         }
 
+        private Vec2 PositionStep(EntityData entity)
+        {
+            return new Vec2(
+                entity.Position.X + entity.Direction.X * SPEED,
+                entity.Position.Y + entity.Direction.Y * SPEED);
+        }
+
         private Vec2 UpdatePlayerPosition(PlayerData player)
         {
-            Vec2 pos = new Vec2(
-                player.Position.X + player.Direction.X * SPEED,
-                player.Position.Y + player.Direction.Y * SPEED);
+            Vec2 pos = PositionStep(player);
 
             if (pos.X <= 0) pos.X = 0;
             if (pos.Y <= 0) pos.Y = 0;
-            if (pos.X >= windowX) pos.X = windowX;
-            if (pos.Y >= windowY) pos.Y = windowY;
+            if (pos.X + player.Size.X >= windowX) pos.X = windowX - player.Size.X;
+            if (pos.Y + player.Size.Y >= windowY) pos.Y = windowY - player.Size.Y;
 
             return pos;
         }
 
         private Vec2 UpdateGhostPosition(EntityData ghost)
         {
-            Vec2 pos = new Vec2(
-                ghost.Position.X + ghost.Direction.X * SPEED,
-                ghost.Position.Y + ghost.Direction.Y * SPEED);
+            Vec2 pos = PositionStep(ghost);
 
-            if (pos.X <= 0 || pos.X >= windowX) ghost.Direction.X *= -1;
-            if (pos.Y <= 0 || pos.Y >= windowY) ghost.Direction.Y *= -1;
+            if (pos.X <= 0 || pos.X + ghost.Size.X >= windowX) ghost.Direction.X *= -1;
+            if (pos.Y <= 0 || pos.Y + ghost.Size.Y >= windowY) ghost.Direction.Y *= -1;
+
+            foreach (var wall in wallData)
+            {
+                if (DoBoxesIntersect(ghost, wall))
+                {
+                    ghost.Direction.Invert();
+                    ghost.Position = PositionStep(ghost);
+                    return PositionStep(ghost); // iterate twice
+                }
+            }
 
             return pos;
         }
@@ -192,38 +211,19 @@ namespace services
 
             foreach (var wall in wallData)
             {
-
+                if (DoBoxesIntersect(player, wall))
+                {
+                    player.Direction = new Vec2(0, 0);
+                }
             }
         }
 
-        private bool AnyEntityAlive(List<EntityData> entities)
-        {
-            foreach (var ent in entities)
-            {
-                if (ent.Alive) return true;
-            }
-            return false;
-        }
+        private bool AnyEntityAlive(List<EntityData> entities) => entities.Any((ent) => ent.Alive);
 
-        private bool AnyPlayerAlive(List<PlayerData> players)
-        {
-            foreach (var ent in players)
-            {
-                if (ent.Alive) return true;
-            }
-            return false;
-        }
+        private bool AnyPlayerAlive(List<PlayerData> players) => players.Any((pl) => pl.Alive);
 
-        public override string ToString()
-        {
-            string output = "";
-            foreach (var player in playerData)
-            {
-                output += player.Pid.ToString().Substring(0, 8) + " " + player.ToString();
-                output += Environment.NewLine;
-            }
-            return output;
-        }
+        public override string ToString() =>
+            playerData.Aggregate("", (res, pl) => res + pl.ToString() + Environment.NewLine);
     }
 
     [Serializable]
@@ -274,8 +274,8 @@ namespace services
 
         public override string ToString()
         {
-            return String.Format("{0} at {1}\tSize: {2}\tAlive: {3}",
-                GetType().ToString(), position, size, alive);
+            return String.Format("{0}({1}) at {1}\tSize: {2}\tAlive: {3}",
+                GetType().ToString(), pid.ToString().Substring(0, 6), position, size, alive);
         }
     }
 
@@ -297,7 +297,8 @@ namespace services
 
         public IGameState ApplyTransitions(ICollection<PlayerAction> actions)
         {
-            foreach (var action in actions)
+            List<PlayerAction> actionsToProcess = new List<PlayerAction>(actions);
+            foreach (var action in actionsToProcess)
             {
                 CurrentState.ApplyAction(action);
             }
