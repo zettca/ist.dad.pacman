@@ -23,6 +23,12 @@ namespace pacman
         private List<string[]> stdinLines;
         private int numRounds = 0;
 
+        Image
+            imgLeft = Properties.Resources.Left,
+            imgRight = Properties.Resources.Right,
+            imgDown = Properties.Resources.Down,
+            imgUp = Properties.Resources.Up;
+
         public FormPacman(Uri uri, string username, int msec, string serverEndpoint, List<string[]> lines)
         {
             InitializeComponent();
@@ -183,7 +189,7 @@ namespace pacman
         {
             gameState.PlayerData.ForEach((player) =>
             {
-                PictureBox pic = CreatePictureForEntity(player, Properties.Resources.Left);
+                PictureBox pic = CreatePictureForEntity(player, imgLeft);
                 if (player.Pid == guid) pic.BackColor = Color.Gray;
             });
 
@@ -214,10 +220,10 @@ namespace pacman
 
         private Image GetPacmanDirectionImage(Vec2 dir)
         {
-            if (dir.X > 0) return Properties.Resources.Right;
-            if (dir.X < 0) return Properties.Resources.Left;
-            if (dir.Y > 0) return Properties.Resources.Down;
-            if (dir.Y < 0) return Properties.Resources.Up;
+            if (dir.X > 0) return imgRight;
+            if (dir.X < 0) return imgLeft;
+            if (dir.Y > 0) return imgDown;
+            if (dir.Y < 0) return imgUp;
 
             return null;
         }
