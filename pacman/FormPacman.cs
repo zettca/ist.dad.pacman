@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.Remoting;
 using System.Threading;
 using System.Windows.Forms;
@@ -238,12 +237,12 @@ namespace pacman
 
         private void BroadcastMessage(ChatMessage msg) =>
             peers.ForEach((peer) => new Thread(() => peer.SendMessage(msg)).Start());
-        internal void AddPeer(IGameClient peer)
-        {
-            peers.Add(peer);
-        }
 
-        internal string WinnerMessage(Guid winnerId) => 
+        internal void AddPeer(Uri peerEndpoint) =>
+            peers.Add((IGameClient)Activator.GetObject(typeof(IGameClient),
+                peerEndpoint.AbsoluteUri));
+
+        internal string WinnerMessage(Guid winnerId) =>
             (winnerId == guid) ? "YOU WON!" : "You Lost :(";
     }
 
@@ -264,16 +263,11 @@ namespace pacman
             this.endpoint = endpoint;
         }
 
-        public void RegisterNewClient(Uri peerClientObjectEndpoint)
+        public void SendGameStart(IGameState state, List<Uri> peerEndpoints)
         {
-            IGameClient peer = (IGameClient)Activator.GetObject(typeof(IGameClient),
-                peerClientObjectEndpoint.AbsoluteUri);
-
-            form.AddPeer(peer);
-        }
-
-        public void SendGameStart(IGameState state, List<Uri> peerEndpoints) =>
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
+            peerEndpoints.ForEach((peer) => form.AddPeer(peer));
+        }
 
         public void SendGameState(IGameState state) =>
             form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameState)state);

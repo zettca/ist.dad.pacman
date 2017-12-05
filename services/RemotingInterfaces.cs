@@ -55,8 +55,5 @@ namespace services
         void SendGameStart(IGameState state, List<Uri> peerEndpoints);
         void SendGameState(IGameState state);
         void SendMessage(ChatMessage message);
-
-        // used by server to broadcast new clients
-        void RegisterNewClient(Uri peerClientObjectEndpoint);
     }
 }

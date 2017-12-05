@@ -72,19 +72,6 @@ namespace server
             if (clientConnection == null)
                 Console.WriteLine("\tFailed to get remote object.");
 
-            foreach (var peer in clients)
-            {
-                // register new peer on existing clients
-                Console.Write("\tRegister " + endpoint.AbsoluteUri);
-                Console.WriteLine(" on " + peer.Conn.Uri);
-                peer.Conn.RegisterNewClient(endpoint);
-
-                // register existing clients on new peer
-                Console.Write("\tRegister " + peer.Conn.Uri);
-                Console.WriteLine(" on " + clientConnection.Uri);
-                clientConnection.RegisterNewClient(peer.Conn.Uri);
-            }
-
             Guid clientGuid = Guid.NewGuid();
 
             clients.Add(new ServiceClient(endpoint, clientGuid, username, clientConnection));
