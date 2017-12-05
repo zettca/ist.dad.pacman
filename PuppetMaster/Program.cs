@@ -35,6 +35,7 @@ namespace PuppetMaster
 
             string line;
             Console.WriteLine("Reading lines...");
+            Console.Write("> ");
             while ((line = Console.ReadLine()) != null)
             {
                 string[] parameters = line.Split(' ');
@@ -115,13 +116,16 @@ namespace PuppetMaster
                         case "Wait":
                             if (parameters.Length.Equals(2))
                             {
-                                new Thread(() => Wait(parameters[1])).Start();
+                                int ms = Int32.Parse(parameters[1]);
+                                Thread.Sleep(ms);
                             }
                             else
                                 Console.WriteLine("Expected arguments: x_ms");
                             break;
                     }
                 }
+
+                Console.Write("> ");
             }
         }
 
