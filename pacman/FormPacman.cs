@@ -23,12 +23,6 @@ namespace pacman
         private List<string[]> stdinLines;
         private int numRounds = 0;
 
-        Image
-            imgLeft = Properties.Resources.Left,
-            imgRight = Properties.Resources.Right,
-            imgDown = Properties.Resources.Down,
-            imgUp = Properties.Resources.Up;
-
         public FormPacman(Uri uri, string username, int msec, string serverEndpoint, List<string[]> lines)
         {
             InitializeComponent();
@@ -187,26 +181,19 @@ namespace pacman
 
         public void DrawGame(PacmanGameState gameState)
         {
-            foreach (var player in gameState.PlayerData)
+            gameState.PlayerData.ForEach((player) =>
             {
-                PictureBox pic = CreatePictureForEntity(player, imgLeft);
+                PictureBox pic = CreatePictureForEntity(player, Properties.Resources.Left);
                 if (player.Pid == guid) pic.BackColor = Color.Gray;
-            }
+            });
 
-            foreach (var ghost in gameState.GhostData)
-            {
-                CreatePictureForEntity(ghost, Properties.Resources.pink_guy);
-            }
+            gameState.GhostData.ForEach((ghost) =>
+                CreatePictureForEntity(ghost, Properties.Resources.pink_guy));
 
-            foreach (var food in gameState.FoodData)
-            {
-                CreatePictureForEntity(food, Properties.Resources.cccc);
-            }
+            gameState.FoodData.ForEach((food) =>
+                CreatePictureForEntity(food, Properties.Resources.cccc));
 
-            foreach (var wall in gameState.WallData)
-            {
-                CreatePictureForEntity(wall, Properties.Resources.coint2);
-            }
+            gameState.WallData.ForEach((wall) => CreatePictureForEntity(wall, null));
         }
 
         private PictureBox CreatePictureForEntity(EntityData entity, Image image)
@@ -227,10 +214,10 @@ namespace pacman
 
         private Image GetPacmanDirectionImage(Vec2 dir)
         {
-            if (dir.X > 0) return imgRight;
-            if (dir.X < 0) return imgLeft;
-            if (dir.Y > 0) return imgDown;
-            if (dir.Y < 0) return imgUp;
+            if (dir.X > 0) return Properties.Resources.Right;
+            if (dir.X < 0) return Properties.Resources.Left;
+            if (dir.Y > 0) return Properties.Resources.Down;
+            if (dir.Y < 0) return Properties.Resources.Up;
 
             return null;
         }
