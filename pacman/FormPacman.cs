@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.Remoting;
 using System.Threading;
 using System.Windows.Forms;
@@ -103,7 +104,7 @@ namespace pacman
         {
             if (e.KeyCode == Keys.Enter)
             {
-                services.Message msg = new services.Message(username, tbMsg.Text);
+                ChatMessage msg = new ChatMessage(username, tbMsg.Text);
                 BroadcastMessage(msg);
                 AddMessage(msg);
 
@@ -136,7 +137,7 @@ namespace pacman
 
         }
 
-        public void AddMessage(services.Message msg)
+        public void AddMessage(ChatMessage msg)
         {
             tbChat.Text += msg.ToString();
         }
@@ -235,32 +236,21 @@ namespace pacman
             return null;
         }
 
-        private void BroadcastMessage(services.Message msg)
-        {
-            foreach (IGameClient peer in peers)
-            {
-                string peerName = ((PacmanClientService)peer).username;
-                Console.WriteLine("Message from " + username + " to " + peerName);
-
-                Thread thread = new Thread(() => peer.SendMessage(msg));
-                thread.Start();
-            }
-        }
-
+        private void BroadcastMessage(ChatMessage msg) =>
+            peers.ForEach((peer) => new Thread(() => peer.SendMessage(msg)).Start());
         internal void AddPeer(IGameClient peer)
         {
             peers.Add(peer);
         }
 
-        public void Alert(string msg)
-        {
-            MessageBox.Show(msg);
-        }
+        internal string WinnerMessage(Guid winnerId) => 
+            (winnerId == guid) ? "YOU WON!" : "You Lost :(";
     }
 
     delegate void StringHandler(string msg);
+    delegate void GamerHandler(Guid winnerId);
     delegate void GameHandler(PacmanGameState state);
-    delegate void MessageHandler(services.Message msg);
+    delegate void MessageHandler(ChatMessage msg);
 
     public class PacmanClientService : MarshalByRefObject, IGameClient
     {
@@ -282,32 +272,18 @@ namespace pacman
             form.AddPeer(peer);
         }
 
-        public void SendGameStart(IGameState state, List<Uri> peerEndpoints)
-        {
+        public void SendGameStart(IGameState state, List<Uri> peerEndpoints) =>
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
-        }
 
-        public void SendGameState(IGameState state)
-        {
+        public void SendGameState(IGameState state) =>
             form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameState)state);
-        }
 
-        public void SendMessage(services.Message msg)
-        {
+        public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);
-        }
 
         public Uri Uri => endpoint;
 
-        public void SendScoreboard(Dictionary<Guid, int> scoreboard)
-        {
-            if (scoreboard == null) return;
-            string scores = "";
-            foreach (var entry in scoreboard)
-            {
-                scores += String.Format("{0} {1}" + Environment.NewLine, entry.Key + " " + entry.Value);
-            }
-            form.Invoke(new StringHandler(form.Alert), scores);
-        }
+        public void SendScoreboard(Guid winnerId) =>
+            SendMessage(new ChatMessage("SERVER", form.WinnerMessage(winnerId)));
     }
 }

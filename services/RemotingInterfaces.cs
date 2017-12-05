@@ -17,11 +17,11 @@ namespace services
     }
 
     [Serializable]
-    public class Message
+    public class ChatMessage
     {
         public string sender, message;
 
-        public Message(string sender, string message)
+        public ChatMessage(string sender, string message)
         {
             this.sender = sender;
             this.message = message;
@@ -51,10 +51,10 @@ namespace services
     {
         Uri Uri { get; }
 
-        void SendScoreboard(Dictionary<Guid, int> scoreboard);
+        void SendScoreboard(Guid winner);
         void SendGameStart(IGameState state, List<Uri> peerEndpoints);
         void SendGameState(IGameState state);
-        void SendMessage(Message message);
+        void SendMessage(ChatMessage message);
 
         // used by server to broadcast new clients
         void RegisterNewClient(Uri peerClientObjectEndpoint);

@@ -25,7 +25,7 @@ namespace server
     class ServerGameService : MarshalByRefObject, IGameServer
     {
         List<ServiceClient> clients;
-        List<Message> messages;
+        List<ChatMessage> messages;
         List<PlayerAction> playerActions;
         StateMachine gameInstance;
 
@@ -37,7 +37,7 @@ namespace server
         ServerGameService()
         {
             clients = new List<ServiceClient>();
-            messages = new List<Message>();
+            messages = new List<ChatMessage>();
             playerActions = new List<PlayerAction>();
         }
 
@@ -69,9 +69,7 @@ namespace server
 
             Console.WriteLine("AbsoluteUri: " + endpoint.AbsoluteUri);
 
-            if (clientConnection != null)
-                Console.WriteLine("\tGot remote object.");
-            else
+            if (clientConnection == null)
                 Console.WriteLine("\tFailed to get remote object.");
 
             foreach (var peer in clients)
@@ -131,17 +129,22 @@ namespace server
 
         private void GameEnd()
         {
-            Dictionary<Guid, int> scores = new Dictionary<Guid, int>();
             PacmanGameState gameState = (PacmanGameState)gameInstance.CurrentState;
+            Guid winnerId = gameState.PlayerData.First().Pid;
+            int maxScore = 0;
 
             foreach (var player in gameState.PlayerData)
             {
-                scores.Add(player.Pid, player.Score);
+                if (player.Score > maxScore)
+                {
+                    maxScore = player.Score;
+                    winnerId = player.Pid;
+                }
             }
 
             foreach (var client in clients)
             {
-                client.Conn.SendScoreboard(null);
+                client.Conn.SendScoreboard(winnerId);
             }
         }
 
