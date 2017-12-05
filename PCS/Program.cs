@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
@@ -11,11 +12,11 @@ namespace pcs
 {
     class Program
     {
-        const string BASE_DIR = "..\\..\\";
+        const string BASE_DIR = "..\\..\\..\\";
         const string objName = "PCS";
 
-        const string serverPath = BASE_DIR + "pacman\\bin\\Debug\\pacman.exe";
-        const string clientPath = BASE_DIR + "server\\bin\\Debug\\server.exe";
+        public const string clientPath = BASE_DIR + "pacman\\bin\\Debug\\pacman.exe";
+        public const string serverPath = BASE_DIR + "server\\bin\\Debug\\server.exe";
 
         // args: port
         static void Main(string[] args)
@@ -42,8 +43,9 @@ namespace pcs
         }
     }
 
-    class PCSService : MarshalByRefObject, IPCS
+    public class PCSService : MarshalByRefObject, IPCS
     {
+
         public void Crash(string pid)
         {
             throw new NotImplementedException();
@@ -69,19 +71,47 @@ namespace pcs
             throw new NotImplementedException();
         }
 
-        public void StartClient(string pid, string pcs_url, string client_url, string msec, string num_players, string file_name)
+        public void StartClient(string pid, string client_url, string msec, string num_players, string file_name, string server_url)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("# StartClient:");
+            Console.WriteLine("\tpid={0}", pid);
+            Console.WriteLine("\tclient_url={0}", client_url);
+            Console.WriteLine("\tmsec={0}", msec);
+            Console.WriteLine("\tnum_players={0}", num_players);
+            Console.WriteLine("\tfile_name={0}", file_name);
+            Console.WriteLine("\tsever_url={0}", server_url);
+
+            Process p = new Process();
+            p.StartInfo.FileName = Program.clientPath;
+            // server_endpoint username client_endpoint MSEC_PER_ROUND
+            p.StartInfo.Arguments = server_url + " " + pid + " " + client_url + " " + msec
+                + ((file_name != null) ? (" " + file_name) : "");
+            p.Start();
         }
 
-        public void StartServer(string pid, string pcs_url, string server_url, string msec, string num_players)
+        public void StartServer(string pid, string server_url, string msec, string num_players)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("# StartServer:");
+            Console.WriteLine("\tpid={0}", pid);
+            Console.WriteLine("\tserver_url={0}", server_url);
+            Console.WriteLine("\tmsec={0}", msec);
+            Console.WriteLine("\tnum_players={0}", num_players);
+
+            Process p = new Process();
+            p.StartInfo.FileName = Program.serverPath;
+            // endpoint msec numPlayers 
+            p.StartInfo.Arguments = server_url + " " + msec + " " + num_players;
+            p.Start();
         }
 
         public void Unfreeze(string pid)
         {
             throw new NotImplementedException();
+        }
+
+        public void Print(string str)
+        {
+            Console.WriteLine(str);
         }
     }
 }
