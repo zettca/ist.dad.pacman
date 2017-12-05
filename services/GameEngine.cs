@@ -285,30 +285,14 @@ namespace services
 
         public IGameState CurrentState { get { return currentState; } }
 
-        public StateMachine(IGameState initialState)
-        {
-            currentState = initialState;
-        }
+        public StateMachine(IGameState initialState) => currentState = initialState;
 
-        public IGameState ApplyTransition(PlayerAction action)
-        {
-            return CurrentState.ApplyAction(action);
-        }
+        public IGameState ApplyTransition(PlayerAction action) =>
+            CurrentState.ApplyAction(action);
 
         public IGameState ApplyTransitions(ICollection<PlayerAction> actions)
-        {
-            List<PlayerAction> actionsToProcess = new List<PlayerAction>(actions);
-            foreach (var action in actionsToProcess)
-            {
-                CurrentState.ApplyAction(action);
-            }
+            => actions.Aggregate(currentState, (state, action) => ApplyTransition(action));
 
-            return CurrentState;
-        }
-
-        public IGameState ApplyTick()
-        {
-            return CurrentState.ApplyTick();
-        }
+        public IGameState ApplyTick() => CurrentState.ApplyTick();
     }
 }

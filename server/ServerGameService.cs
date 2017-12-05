@@ -108,8 +108,9 @@ namespace server
 
             while (!gameInstance.CurrentState.HasEnded)
             {
-                gameInstance.ApplyTransitions(playerActions);
+                List<PlayerAction> actionsToProcess = new List<PlayerAction>(playerActions);
                 playerActions.Clear();
+                gameInstance.ApplyTransitions(actionsToProcess);
                 gameInstance.ApplyTick();
 
                 new Thread(() => SendGameState()).Start();

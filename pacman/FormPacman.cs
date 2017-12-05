@@ -205,8 +205,7 @@ namespace pacman
 
             foreach (var wall in gameState.WallData)
             {
-                AddMessage(new services.Message("cenas", wall.Position.ToString() + wall.Size.ToString()));
-                CreatePictureForEntity(wall, null);
+                CreatePictureForEntity(wall, Properties.Resources.coint2);
             }
         }
 
@@ -224,16 +223,6 @@ namespace pacman
             };
             panelCanvas.Controls.Add(pic);
             return pic;
-        }
-
-
-        private void DrawObject(EntityData entity, Image image)
-        {
-            Control[] pics = panelCanvas.Controls.Find(entity.Pid.ToString(), true);
-            PictureBox pic = (pics.Length == 0) ? CreatePictureForEntity(entity, image) : pics[0] as PictureBox;
-
-            pic.Location = new Point(entity.Position.X, entity.Position.Y);
-            if (!entity.Alive) pic.Hide();
         }
 
         private Image GetPacmanDirectionImage(Vec2 dir)
