@@ -9,7 +9,8 @@ namespace PuppetMaster
 {
     class Program
     {
-        private static Dictionary<string, IPCS> pcsDict = new Dictionary<string, IPCS>();
+        private static Dictionary<string, IPCS> pcsByUrl = new Dictionary<string, IPCS>();
+        private static Dictionary<string, IPCS> pcsByPID = new Dictionary<string, IPCS>();
         public static List<string> knownServers = new List<string>();
 
 
@@ -30,7 +31,7 @@ namespace PuppetMaster
                 Console.WriteLine("Connecting to {0}", arg);
                 IPCS pcs = Activator.GetObject(typeof(PCSService), arg) as IPCS;
                 pcs.Print("Hello there :)");
-                pcsDict.Add(arg, pcs);
+                pcsByUrl.Add(arg, pcs);
             }
 
             string line;
@@ -146,12 +147,28 @@ namespace PuppetMaster
 
         private static void Unfreeze(string pid)
         {
-            throw new NotImplementedException();
+            try
+            {
+                IPCS pcs = pcsByPID[pid];
+                pcs.Unfreeze(pid);
+            }
+            catch (KeyNotFoundException e)
+            {
+                Console.WriteLine("Unknown PID: {0}", pid);
+            }
         }
 
         private static void Freeze(string pid)
         {
-            throw new NotImplementedException();
+            try
+            {
+                IPCS pcs = pcsByPID[pid];
+                pcs.Freeze(pid);
+            }
+            catch (KeyNotFoundException e)
+            {
+                Console.WriteLine("Unknown PID: {0}", pid);
+            }
         }
 
         private static void GlobalStatus()
@@ -161,16 +178,25 @@ namespace PuppetMaster
 
         private static void Crash(string pid)
         {
-            throw new NotImplementedException();
+            try
+            {
+                IPCS pcs = pcsByPID[pid];
+                pcs.Crash(pid);
+            }
+            catch (KeyNotFoundException e)
+            {
+                Console.WriteLine("Unknown PID: {0}", pid);
+            }
         }
 
         private static void StartServer(string pid, string pcs_url, string server_url, string msec, string num_players)
         {
             try
             {
-                IPCS pcs = pcsDict[pcs_url];
+                IPCS pcs = pcsByUrl[pcs_url];
                 pcs.StartServer(pid, server_url, msec, num_players);
                 knownServers.Add(server_url);
+                pcsByPID[pid] = pcs;
             }
             catch (KeyNotFoundException e)
             {
@@ -182,11 +208,12 @@ namespace PuppetMaster
         {
             try
             {
-                IPCS pcs = pcsDict[pcs_url];
+                IPCS pcs = pcsByUrl[pcs_url];
                 try
                 {
                     string server_url = knownServers[0];
                     pcs.StartClient(pid, client_url, msec, num_players, file_name, server_url);
+                    pcsByPID[pid] = pcs;
                 }
                 catch (ArgumentOutOfRangeException e)
                 {

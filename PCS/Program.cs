@@ -1,7 +1,9 @@
-﻿using System;
+﻿using PCS;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
@@ -45,6 +47,7 @@ namespace pcs
 
     public class PCSService : MarshalByRefObject, IPCS
     {
+        private Dictionary<string, Process> processes = new Dictionary<string, Process>();
 
         public void Crash(string pid)
         {
@@ -53,7 +56,8 @@ namespace pcs
 
         public void Freeze(string pid)
         {
-            throw new NotImplementedException();
+            Process p = processes[pid];
+            ProcessControl.Suspend(p);
         }
 
         public void GlobalStatus()
@@ -87,6 +91,7 @@ namespace pcs
             p.StartInfo.Arguments = server_url + " " + pid + " " + client_url + " " + msec
                 + ((file_name != null) ? (" " + file_name) : "");
             p.Start();
+            processes.Add(pid, p);
         }
 
         public void StartServer(string pid, string server_url, string msec, string num_players)
@@ -102,16 +107,19 @@ namespace pcs
             // endpoint msec numPlayers 
             p.StartInfo.Arguments = server_url + " " + msec + " " + num_players;
             p.Start();
+            processes.Add(pid, p);
         }
 
         public void Unfreeze(string pid)
         {
-            throw new NotImplementedException();
+            Process p = processes[pid];
+            ProcessControl.Resume(p);
         }
 
         public void Print(string str)
         {
             Console.WriteLine(str);
         }
+        
     }
 }
