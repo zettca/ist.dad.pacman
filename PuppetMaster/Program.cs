@@ -20,7 +20,8 @@ namespace PuppetMaster
             if (args.Length == 0)
             {
                 Console.WriteLine("Error: expected PCS endpoint URL(s) as arguments.");
-                System.Environment.Exit(-1);
+                Console.ReadKey();
+                Environment.Exit(-1);
             }
 
             TcpChannel channel = new TcpChannel(0);
