@@ -7,6 +7,23 @@ using System.Threading.Tasks;
 
 namespace server
 {
+
+    public class StateMachine
+    {
+        private IGameState currentState;
+
+        public IGameState CurrentState { get { return currentState; } }
+
+        public StateMachine(IGameState initialState) => currentState = initialState;
+
+        public IGameState ApplyTransition(PlayerAction action) => CurrentState.ApplyAction(action);
+
+        public IGameState ApplyTransitions(ICollection<PlayerAction> actions) =>
+            actions.Aggregate(currentState, (state, action) => ApplyTransition(action));
+
+        public IGameState ApplyTick() => CurrentState.ApplyTick();
+    }
+
     public class PacmanGameState : IGameState
     {
         const int
