@@ -132,7 +132,7 @@ namespace PuppetMaster
 
         private static void Wait(string ms)
         {
-            throw new NotImplementedException();
+            Thread.Sleep(Int32.Parse(ms));
         }
 
         private static void LocalState(string pid, string round_id)
