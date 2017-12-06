@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
+using System.ComponentModel;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -51,7 +52,16 @@ namespace pcs
 
         public void Crash(string pid)
         {
-            throw new NotImplementedException();
+            try
+            {
+                Process p = processes[pid];
+                processes.Remove(pid);
+                if(!p.HasExited)
+                    p.Kill();
+            }
+            catch (InvalidOperationException){ Console.WriteLine("Process {0} has already exited", pid); }
+            catch (Win32Exception) { Console.WriteLine("Process {0} could not be terminated or is already terminating", pid); }
+            catch (KeyNotFoundException) { Console.WriteLine("Process {0} has already been terminated", pid); }
         }
 
         public void Freeze(string pid)
@@ -83,15 +93,38 @@ namespace pcs
             Console.WriteLine("\tmsec={0}", msec);
             Console.WriteLine("\tnum_players={0}", num_players);
             Console.WriteLine("\tfile_name={0}", file_name);
-            Console.WriteLine("\tsever_url={0}", server_url);
+            Console.WriteLine("\tserver_url={0}", server_url);
 
-            Process p = new Process();
-            p.StartInfo.FileName = Program.clientPath;
-            // server_endpoint username client_endpoint MSEC_PER_ROUND
-            p.StartInfo.Arguments = server_url + " " + pid + " " + client_url + " " + msec
-                + ((file_name != null) ? (" " + file_name) : "");
-            p.Start();
-            processes.Add(pid, p);
+            Boolean pid_exists = false;
+
+            foreach (string key in processes.Keys)
+            {
+                if (pid.Equals(key))
+                {
+                    if (!processes[key].HasExited)
+                        pid_exists = true;
+                    else
+                        processes.Remove(key);
+                    break;
+                }
+            }
+
+            if (!pid_exists)
+            {
+                try
+                {
+                    Process p = new Process();
+                    p.StartInfo.FileName = Program.clientPath;
+                    // server_endpoint username client_endpoint MSEC_PER_ROUND
+                    p.StartInfo.Arguments = server_url + " " + pid + " " + client_url + " " + msec
+                        + ((file_name != null) ? (" " + file_name) : "");
+                    p.Start();
+                    processes.Add(pid, p);
+                }
+                catch(InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
+            }
+            else
+                Console.WriteLine("\nThe pid specified already exists : {0}", pid);
         }
 
         public void StartServer(string pid, string server_url, string msec, string num_players)
@@ -102,12 +135,35 @@ namespace pcs
             Console.WriteLine("\tmsec={0}", msec);
             Console.WriteLine("\tnum_players={0}", num_players);
 
-            Process p = new Process();
-            p.StartInfo.FileName = Program.serverPath;
-            // endpoint msec numPlayers 
-            p.StartInfo.Arguments = server_url + " " + msec + " " + num_players;
-            p.Start();
-            processes.Add(pid, p);
+            Boolean pid_exists = false;
+
+            foreach (string key in processes.Keys)
+            {
+                if (pid.Equals(key))
+                {
+                    if(!processes[key].HasExited)
+                        pid_exists = true;
+                    else
+                        processes.Remove(key);
+                    break;
+                }
+            }
+
+            if (!pid_exists)
+            {
+                try
+                {
+                    Process p = new Process();
+                    p.StartInfo.FileName = Program.serverPath;
+                    // endpoint msec numPlayers 
+                    p.StartInfo.Arguments = server_url + " " + msec + " " + num_players;
+                    p.Start();
+                    processes.Add(pid, p);
+                }
+                catch(InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
+            }
+            else
+                Console.WriteLine("\nThe pid specified already exists : {0}", pid);
         }
 
         public void Unfreeze(string pid)

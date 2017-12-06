@@ -183,6 +183,7 @@ namespace PuppetMaster
             {
                 IPCS pcs = pcsByPID[pid];
                 pcs.Crash(pid);
+                pcsByPID.Remove(pid);
             }
             catch (KeyNotFoundException e)
             {
