@@ -141,7 +141,7 @@ namespace pacman
             tbChat.Text += msg.ToString();
         }
 
-        public void UpdateGame(PacmanGameState gameState)
+        public void UpdateGame(PacmanGameData gameData)
         {
             numRounds++;
             if (readingFromFile)
@@ -158,7 +158,7 @@ namespace pacman
                 }
             }
 
-            foreach (var player in gameState.PlayerData)
+            foreach (var player in gameData.PlayerData)
             {
                 PictureBox pic = panelCanvas.Controls.Find(player.Pid.ToString(), true)[0] as PictureBox;
                 Image img = GetPacmanDirectionImage(player.Direction);
@@ -172,34 +172,34 @@ namespace pacman
                 }
             }
 
-            foreach (var ghost in gameState.GhostData)
+            foreach (var ghost in gameData.GhostData)
             {
                 PictureBox pic = panelCanvas.Controls.Find(ghost.Pid.ToString(), true)[0] as PictureBox;
                 pic.Location = new Point(ghost.Position.X, ghost.Position.Y);
             }
 
-            foreach (var food in gameState.FoodData)
+            foreach (var food in gameData.FoodData)
             {
                 PictureBox pic = panelCanvas.Controls.Find(food.Pid.ToString(), true)[0] as PictureBox;
                 if (!food.Alive && pic.Visible) pic.Visible = false;
             }
         }
 
-        public void DrawGame(PacmanGameState gameState)
+        public void DrawGame(PacmanGameData gameData)
         {
-            gameState.PlayerData.ForEach((player) =>
+            gameData.PlayerData.ForEach((player) =>
             {
                 PictureBox pic = CreatePictureForEntity(player, imgLeft);
                 if (player.Pid == guid) pic.BackColor = Color.Gray;
             });
 
-            gameState.GhostData.ForEach((ghost) =>
+            gameData.GhostData.ForEach((ghost) =>
                 CreatePictureForEntity(ghost, Properties.Resources.pink_guy));
 
-            gameState.FoodData.ForEach((food) =>
+            gameData.FoodData.ForEach((food) =>
                 CreatePictureForEntity(food, Properties.Resources.cccc));
 
-            gameState.WallData.ForEach((wall) => CreatePictureForEntity(wall, null));
+            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, null));
         }
 
         private PictureBox CreatePictureForEntity(EntityData entity, Image image)
@@ -241,7 +241,7 @@ namespace pacman
 
     delegate void StringHandler(string msg);
     delegate void GamerHandler(Guid winnerId);
-    delegate void GameHandler(PacmanGameState state);
+    delegate void GameHandler(PacmanGameData data);
     delegate void MessageHandler(ChatMessage msg);
 
     public class PacmanClientService : MarshalByRefObject, IGameClient
@@ -256,14 +256,14 @@ namespace pacman
             this.endpoint = endpoint;
         }
 
-        public void SendGameStart(IGameState state, List<Uri> peerEndpoints)
+        public void SendGameStart(IGameData data, List<Uri> peerEndpoints)
         {
-            form.Invoke(new GameHandler(form.DrawGame), (PacmanGameState)state);
+            form.Invoke(new GameHandler(form.DrawGame), (PacmanGameData)data);
             peerEndpoints.ForEach((peer) => form.AddPeer(peer));
         }
 
-        public void SendGameState(IGameState state) =>
-            form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameState)state);
+        public void SendGameState(IGameData data) =>
+            form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
 
         public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);

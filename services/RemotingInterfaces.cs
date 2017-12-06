@@ -36,9 +36,15 @@ namespace services
     public interface IGameState
     {
         bool HasEnded { get; }
+        IGameData Data { get; }
 
         IGameState ApplyTick();
         IGameState ApplyAction(PlayerAction action);
+    }
+
+    public interface IGameData
+    {
+
     }
 
     public interface IGameServer // Client >> Server
@@ -52,8 +58,8 @@ namespace services
         Uri Uri { get; }
 
         void SendScoreboard(Guid winner);
-        void SendGameStart(IGameState state, List<Uri> peerEndpoints);
-        void SendGameState(IGameState state);
+        void SendGameStart(IGameData data, List<Uri> peerEndpoints);
+        void SendGameState(IGameData data);
         void SendMessage(ChatMessage message);
     }
 }

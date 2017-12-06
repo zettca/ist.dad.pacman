@@ -110,7 +110,7 @@ namespace server
         {
             foreach (var client in clients)
             {
-                client.Conn.SendGameStart(gameInstance.CurrentState, ClientUris);
+                client.Conn.SendGameStart(gameInstance.CurrentState.Data, ClientUris);
             }
         }
 
@@ -141,7 +141,7 @@ namespace server
             {
                 try
                 {
-                    client.Conn.SendGameState(gameInstance.CurrentState);
+                    client.Conn.SendGameState(gameInstance.CurrentState.Data);
                 }
                 catch (Exception e)
                 {
