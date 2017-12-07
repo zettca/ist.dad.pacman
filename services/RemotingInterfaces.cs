@@ -52,14 +52,14 @@ namespace services
     }
 
     // Client >> Server
-    public interface IGameServer : ISlaveControl
+    public interface IGameServer
     {
         Guid RegisterPlayer(Uri endpoint, string username);
         void SendKey(Guid from, int keyValue, bool isKeyDown);
     }
 
     // Server > Client; Client -> Client
-    public interface IGameClient : ISlaveControl
+    public interface IGameClient
     {
         Uri Uri { get; }
 

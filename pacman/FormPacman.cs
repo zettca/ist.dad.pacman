@@ -258,7 +258,7 @@ namespace pacman
     delegate void GameHandler(PacmanGameData data);
     delegate void MessageHandler(ChatMessage msg);
 
-    public class PacmanClientService : MarshalByRefObject, IGameClient
+    public class PacmanClientService : MarshalByRefObject, IGameClient, ISlaveControl
     {
         public FormPacman form;
         public string username { get; private set; }

@@ -22,7 +22,7 @@ namespace server
         }
     }
 
-    class ServerGameService : MarshalByRefObject, IGameServer
+    class ServerGameService : MarshalByRefObject, IGameServer, ISlaveControl
     {
         List<ServiceClient> clients;
         List<ChatMessage> messages;
