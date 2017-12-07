@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.Remoting;
 using System.Threading;
 using System.Windows.Forms;
@@ -14,7 +15,7 @@ namespace pacman
         private string username;
         IGameServer server;
         Guid guid; // identifies the player on the server
-        private PacmanClientService peer;
+        private PacmanClientService peerService;
         private List<IGameClient> peers = new List<IGameClient>();
         Uri uri;
 
@@ -103,7 +104,8 @@ namespace pacman
         {
             if (e.KeyCode == Keys.Enter)
             {
-                ChatMessage msg = new ChatMessage(peer.Clock, username, tbMsg.Text);
+                if (tbMsg.Text.Trim().Length == 0) return;
+                ChatMessage msg = new ChatMessage(peerService.Clock, username, tbMsg.Text);
                 BroadcastMessage(msg);
                 AddMessage(msg);
 
@@ -115,15 +117,15 @@ namespace pacman
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            peer = new PacmanClientService(uri, username);
+            peerService = new PacmanClientService(uri, username);
             string objName = uri.AbsolutePath.Replace("/", "");
             Console.WriteLine("objName:\t{0}", objName);
-            RemotingServices.Marshal(peer, objName, typeof(PacmanClientService));
+            RemotingServices.Marshal(peerService, objName, typeof(PacmanClientService));
 
             Console.WriteLine("Created PacmanClientService at " + uri.AbsoluteUri);
             Console.WriteLine("Connecting to server at " + serverEndpoint);
 
-            peer.form = this;
+            peerService.form = this;
             server = Activator.GetObject(typeof(IGameServer), serverEndpoint) as IGameServer;
 
             guid = server.RegisterPlayer(uri, username);
@@ -135,9 +137,21 @@ namespace pacman
             }
 
         }
+        private Dictionary<Uri, int> ClocksMax(Dictionary<Uri, int> a, Dictionary<Uri, int> b)
+        {
+            Dictionary<Uri, int> clocksMax = new Dictionary<Uri, int>();
+
+            a.Keys.ToList().ForEach((key) => clocksMax.Add(key, Math.Max(a[key], b[key])));
+
+            return clocksMax;
+        }
+
 
         public void AddMessage(ChatMessage msg)
         {
+            tbChat.Text += String.Join(", ", msg.Clock.Values.Select(x => x.ToString()).ToArray()) + Environment.NewLine;
+            peerService.Clock = ClocksMax(peerService.Clock, msg.Clock);
+            peerService.Clock[uri]++;
             tbChat.Text += msg.ToString();
         }
 
@@ -249,7 +263,7 @@ namespace pacman
         public FormPacman form;
         public string username { get; private set; }
         private Uri endpoint;
-        public Dictionary<Uri, int> Clock { get; }
+        public Dictionary<Uri, int> Clock { get; set; }
 
         public Uri Uri => endpoint;
 
@@ -266,19 +280,17 @@ namespace pacman
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameData)data);
             peerEndpoints.ForEach((peerUri) =>
             {
-                form.AddPeer(peerUri);
-                Clock.Add(peerUri, (peerUri == endpoint) ? 1 : 0);
+                if (peerUri != endpoint) form.AddPeer(peerUri);
+                Clock.Add(peerUri, 0);
             });
+            Clock[endpoint]++;
         }
 
         public void SendGameState(IGameData data) =>
             form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
 
-        public void SendMessage(ChatMessage msg)
-        {
+        public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);
-            Clock[endpoint]++;
-        }
 
         public void SendScoreboard(Guid winnerId) =>
             SendMessage(new ChatMessage(null, "SERVER", form.WinnerMessage(winnerId)));

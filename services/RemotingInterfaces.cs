@@ -3,7 +3,6 @@ using System;
 
 namespace services
 {
-
     public struct PlayerAction
     {
         public Guid pid;
