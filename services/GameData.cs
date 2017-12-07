@@ -69,6 +69,9 @@ namespace services
             Pid = pid;
             Score = score;
         }
+
+        public override string ToString() =>
+            String.Format("{0}, {1}, {2}, {3}", Pid, (Alive) ? "P" : "L", Position.X, Position.Y);
     }
 
     [Serializable]
@@ -99,10 +102,7 @@ namespace services
             Alive = alive;
         }
 
-        public override string ToString()
-        {
-            return String.Format("{0}({1}) at {1}\tSize: {2}\tAlive: {3}",
-                GetType().ToString(), pid.ToString().Substring(0, 6), position, size, alive);
-        }
+        public override string ToString() =>
+            String.Format("{0}, {1}, {2}", "W", Position.X, Position.Y);
     }
 }
