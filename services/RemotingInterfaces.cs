@@ -51,13 +51,15 @@ namespace services
         List<PlayerData> PlayerData { get; }
     }
 
-    public interface IGameServer // Client >> Server
+    // Client >> Server
+    public interface IGameServer : ISlaveControl
     {
         Guid RegisterPlayer(Uri endpoint, string username);
         void SendKey(Guid from, int keyValue, bool isKeyDown);
     }
 
-    public interface IGameClient // Server > Client; Client -> Client
+    // Server > Client; Client -> Client
+    public interface IGameClient : ISlaveControl
     {
         Uri Uri { get; }
 
@@ -65,5 +67,12 @@ namespace services
         void SendGameStart(IGameData data, List<Uri> peerEndpoints);
         void SendGameState(IGameData data);
         void SendMessage(ChatMessage message);
+    }
+
+    public interface ISlaveControl // for controlling server and clients
+    {
+        void GlobalStatus();
+        void InjectDelay();
+        void LocalState();
     }
 }

@@ -294,5 +294,20 @@ namespace pacman
 
         public void SendScoreboard(Guid winnerId) =>
             SendMessage(new ChatMessage(null, "SERVER", form.WinnerMessage(winnerId)));
+
+        public void GlobalStatus()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void InjectDelay()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void LocalState()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

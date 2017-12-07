@@ -156,5 +156,20 @@ namespace server
             playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
             Console.WriteLine("INPUT from {0}: {1} {2}", pid.ToString().Substring(0, 6), keyValue, isKeyDown);
         }
+
+        public void GlobalStatus()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void InjectDelay()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void LocalState()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
