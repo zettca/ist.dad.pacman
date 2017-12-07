@@ -95,21 +95,13 @@ namespace pcs
             Console.WriteLine("\tfile_name={0}", file_name);
             Console.WriteLine("\tserver_url={0}", server_url);
 
-            Boolean pid_exists = false;
-
-            foreach (string key in processes.Keys)
-            {
-                if (pid.Equals(key))
+            if (processes.ContainsKey(pid))
+                if (processes[pid].HasExited)
                 {
-                    if (!processes[key].HasExited)
-                        pid_exists = true;
-                    else
-                        processes.Remove(key);
-                    break;
+                    processes[pid].Kill();
+                    processes.Remove(pid);
                 }
-            }
-
-            if (!pid_exists)
+            if (!processes.ContainsKey(pid))
             {
                 try
                 {
@@ -135,21 +127,13 @@ namespace pcs
             Console.WriteLine("\tmsec={0}", msec);
             Console.WriteLine("\tnum_players={0}", num_players);
 
-            Boolean pid_exists = false;
-
-            foreach (string key in processes.Keys)
-            {
-                if (pid.Equals(key))
+            if (processes.ContainsKey(pid))
+                if (processes[pid].HasExited)
                 {
-                    if(!processes[key].HasExited)
-                        pid_exists = true;
-                    else
-                        processes.Remove(key);
-                    break;
+                    processes[pid].Kill();
+                    processes.Remove(pid);
                 }
-            }
-
-            if (!pid_exists)
+            if (!processes.ContainsKey(pid))
             {
                 try
                 {
