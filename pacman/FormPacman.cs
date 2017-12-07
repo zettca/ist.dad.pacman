@@ -103,7 +103,7 @@ namespace pacman
         {
             if (e.KeyCode == Keys.Enter)
             {
-                ChatMessage msg = new ChatMessage(username, tbMsg.Text);
+                ChatMessage msg = new ChatMessage(peer.Clock, username, tbMsg.Text);
                 BroadcastMessage(msg);
                 AddMessage(msg);
 
@@ -249,28 +249,38 @@ namespace pacman
         public FormPacman form;
         public string username { get; private set; }
         private Uri endpoint;
+        public Dictionary<Uri, int> Clock { get; }
+
+        public Uri Uri => endpoint;
 
         public PacmanClientService(Uri endpoint, string username)
         {
             this.username = username;
             this.endpoint = endpoint;
+
+            Clock = new Dictionary<Uri, int>();
         }
 
         public void SendGameStart(IGameData data, List<Uri> peerEndpoints)
         {
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameData)data);
-            peerEndpoints.ForEach((peer) => form.AddPeer(peer));
+            peerEndpoints.ForEach((peerUri) =>
+            {
+                form.AddPeer(peerUri);
+                Clock.Add(peerUri, (peerUri == endpoint) ? 1 : 0);
+            });
         }
 
         public void SendGameState(IGameData data) =>
             form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
 
-        public void SendMessage(ChatMessage msg) =>
+        public void SendMessage(ChatMessage msg)
+        {
             form.Invoke(new MessageHandler(form.AddMessage), msg);
-
-        public Uri Uri => endpoint;
+            Clock[endpoint]++;
+        }
 
         public void SendScoreboard(Guid winnerId) =>
-            SendMessage(new ChatMessage("SERVER", form.WinnerMessage(winnerId)));
+            SendMessage(new ChatMessage(null, "SERVER", form.WinnerMessage(winnerId)));
     }
 }
