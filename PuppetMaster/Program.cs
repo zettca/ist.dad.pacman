@@ -27,13 +27,7 @@ namespace PuppetMaster
             TcpChannel channel = new TcpChannel(0);
 
             ChannelServices.RegisterChannel(channel, false);
-            foreach (string arg in args)
-            {
-                Console.WriteLine("Connecting to {0}", arg);
-                IPCS pcs = Activator.GetObject(typeof(PCSService), arg) as IPCS;
-                pcs.Print("Hello there :)");
-                pcsByUrl.Add(arg, pcs);
-            }
+
 
             string line;
             Console.WriteLine("Reading lines...");
@@ -195,12 +189,12 @@ namespace PuppetMaster
         {
             try
             {
-                IPCS pcs = pcsByUrl[pcs_url];
+                IPCS pcs = getOrConnectToPCS(pcs_url);
                 pcs.StartServer(pid, server_url, msec, num_players);
                 knownServers.Add(server_url);
                 pcsByPID[pid] = pcs;
             }
-            catch (KeyNotFoundException e)
+            catch (UriFormatException e)
             {
                 Console.WriteLine("Invalid PCS_URL: {0}", e);
             }
@@ -210,7 +204,7 @@ namespace PuppetMaster
         {
             try
             {
-                IPCS pcs = pcsByUrl[pcs_url];
+                IPCS pcs = getOrConnectToPCS(pcs_url);
                 try
                 {
                     string server_url = knownServers[0];
@@ -222,9 +216,26 @@ namespace PuppetMaster
                     Console.WriteLine("No known servers. Please start a server first.");
                 }
             }
-            catch (KeyNotFoundException e)
+            catch (UriFormatException e)
             {
                 Console.WriteLine("Invalid PCS_URL: {0}", pcs_url);
+            }
+        }
+
+        private static IPCS getOrConnectToPCS(string pcs_url)
+        {
+            try
+            {
+                return pcsByUrl[pcs_url];
+            }
+            catch (KeyNotFoundException e)
+            {
+                new Uri(pcs_url);
+                Console.WriteLine("Connecting to {0}", pcs_url);
+                IPCS pcs = Activator.GetObject(typeof(PCSService), pcs_url) as IPCS;
+                pcs.Print("Hello there :)");
+                pcsByUrl.Add(pcs_url, pcs);
+                return pcs;
             }
         }
     }
