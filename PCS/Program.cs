@@ -98,7 +98,6 @@ namespace pcs
             if (processes.ContainsKey(pid))
                 if (processes[pid].HasExited)
                 {
-                    processes[pid].Kill();
                     processes.Remove(pid);
                 }
             if (!processes.ContainsKey(pid))
@@ -114,6 +113,7 @@ namespace pcs
                     processes.Add(pid, p);
                 }
                 catch(InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
+                catch (Win32Exception) { Console.WriteLine("Couldn't Initialize the Client"); }
             }
             else
                 Console.WriteLine("\nThe pid specified already exists : {0}", pid);
@@ -130,7 +130,6 @@ namespace pcs
             if (processes.ContainsKey(pid))
                 if (processes[pid].HasExited)
                 {
-                    processes[pid].Kill();
                     processes.Remove(pid);
                 }
             if (!processes.ContainsKey(pid))
@@ -144,7 +143,8 @@ namespace pcs
                     p.Start();
                     processes.Add(pid, p);
                 }
-                catch(InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
+                catch (InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
+                catch (Win32Exception e) { Console.WriteLine("Couldn't Initialize the Server"); Console.WriteLine(e); }
             }
             else
                 Console.WriteLine("\nThe pid specified already exists : {0}", pid);
