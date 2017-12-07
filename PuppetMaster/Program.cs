@@ -4,6 +4,7 @@ using System.Threading;
 using pcs;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
+using System.IO;
 
 namespace PuppetMaster
 {
@@ -16,112 +17,116 @@ namespace PuppetMaster
 
         static void Main(string[] args)
         {
-
-            if (args.Length == 0)
-            {
-                Console.WriteLine("Error: expected PCS endpoint URL(s) as arguments.");
-                Console.ReadKey();
-                Environment.Exit(-1);
-            }
-
             TcpChannel channel = new TcpChannel(0);
 
             ChannelServices.RegisterChannel(channel, false);
 
+            if (args.Length > 0)
+            {
+                Console.WriteLine("Reading file...");
+                var lines = File.ReadAllLines(args[0]);
+                foreach(string l in lines)
+                {
+                    parseLine(l);
+                }
+            }
 
             string line;
             Console.WriteLine("Reading lines...");
             Console.Write("> ");
             while ((line = Console.ReadLine()) != null)
             {
-                string[] parameters = line.Split(' ');
-
-                if (parameters.Length > 0)
-                {
-                    switch (parameters[0])
-                    {
-                        case "StartClient":
-                            int len = parameters.Length;
-                            if (len.Equals(6) || len.Equals(7))
-                            {
-                                new Thread(() => StartClient(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5],
-                                    len.Equals(7) ? parameters[6] : null)).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: PID PCS_URL CLIENT_URL MSEC_PER_ROUND NUM_PLAYERS [filename]");
-                            break;
-
-                        case "StartServer":
-                            if (parameters.Length.Equals(6))
-                            {
-                                new Thread(() => StartServer(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5])).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: PID PCS_URL SERVER_URL MSEC_PER_ROUND NUM_PLAYERS");
-                            break;
-
-                        case "GlobalStatus":
-                            new Thread(() => GlobalStatus()).Start();
-                            break;
-
-                        case "Crash":
-                            if (parameters.Length.Equals(2))
-                            {
-                                new Thread(() => Crash(parameters[1])).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: PID");
-                            break;
-
-                        case "Freeze":
-                            if (parameters.Length.Equals(2))
-                            {
-                                new Thread(() => Freeze(parameters[1])).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: PID");
-                            break;
-
-                        case "Unfreeze":
-                            if (parameters.Length.Equals(2))
-                            {
-                                new Thread(() => Unfreeze(parameters[1])).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: PID");
-                            break;
-
-                        case "InjectDelay":
-                            if (parameters.Length.Equals(3))
-                            {
-                                new Thread(() => InjectDelay(parameters[1], parameters[2])).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: src_PID dst_PID");
-                            break;
-
-                        case "LocalState":
-                            if (parameters.Length.Equals(2))
-                            {
-                                new Thread(() => LocalState(parameters[1], parameters[2])).Start();
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: PID round_id");
-                            break;
-
-                        case "Wait":
-                            if (parameters.Length.Equals(2))
-                            {
-                                int ms = Int32.Parse(parameters[1]);
-                                Thread.Sleep(ms);
-                            }
-                            else
-                                Console.WriteLine("Expected arguments: x_ms");
-                            break;
-                    }
-                }
-
+                parseLine(line);
                 Console.Write("> ");
+            }
+        }
+
+        private static void parseLine(string line) {
+            string[] parameters = line.Split(' ');
+
+            if (parameters.Length <= 0)
+                return;
+
+            switch (parameters[0])
+            {
+                case "StartClient":
+                    int len = parameters.Length;
+                    if (len.Equals(6) || len.Equals(7))
+                    {
+                        new Thread(() => StartClient(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5],
+                            len.Equals(7) ? parameters[6] : null)).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: PID PCS_URL CLIENT_URL MSEC_PER_ROUND NUM_PLAYERS [filename]");
+                    break;
+
+                case "StartServer":
+                    if (parameters.Length.Equals(6))
+                    {
+                        new Thread(() => StartServer(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5])).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: PID PCS_URL SERVER_URL MSEC_PER_ROUND NUM_PLAYERS");
+                    break;
+
+                case "GlobalStatus":
+                    new Thread(() => GlobalStatus()).Start();
+                    break;
+
+                case "Crash":
+                    if (parameters.Length.Equals(2))
+                    {
+                        new Thread(() => Crash(parameters[1])).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: PID");
+                    break;
+
+                case "Freeze":
+                    if (parameters.Length.Equals(2))
+                    {
+                        new Thread(() => Freeze(parameters[1])).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: PID");
+                    break;
+
+                case "Unfreeze":
+                    if (parameters.Length.Equals(2))
+                    {
+                        new Thread(() => Unfreeze(parameters[1])).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: PID");
+                    break;
+
+                case "InjectDelay":
+                    if (parameters.Length.Equals(3))
+                    {
+                        new Thread(() => InjectDelay(parameters[1], parameters[2])).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: src_PID dst_PID");
+                    break;
+
+                case "LocalState":
+                    if (parameters.Length.Equals(2))
+                    {
+                        new Thread(() => LocalState(parameters[1], parameters[2])).Start();
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: PID round_id");
+                    break;
+
+                case "Wait":
+                    if (parameters.Length.Equals(2))
+                    {
+                        int ms = Int32.Parse(parameters[1]);
+                        Thread.Sleep(ms);
+                    }
+                    else
+                        Console.WriteLine("Expected arguments: x_ms");
+                    break;
             }
         }
 
