@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Windows.Forms;
@@ -12,7 +13,7 @@ namespace pacman
         /// <summary>
         /// The main entry point for the application.
         /// 
-        /// args: server_endpoint username client_endpoint MSEC_PER_ROUND
+        /// args: server_endpoint username client_endpoint MSEC_PER_ROUND file
         /// </summary>
         [STAThread]
         static void Main(string[] args)
@@ -27,17 +28,10 @@ namespace pacman
                 Console.WriteLine("arg: {0}", arg);
             }
 
-            List<string[]> lines = new List<string[]>();
-            string line;
-            while ((line = Console.ReadLine()) != null)
-            {
-                if (line.Trim() != "") lines.Add(line.Split(' '));
-            }
-
             string serverEndpoint = (args.Length > 0) ? args[0] : DEFAULT_SERVER;
 
             Uri endpoint;
-            if (args.Length > 0)
+            if (args.Length > 2)
             {
                 endpoint = new Uri(args[2]);
             }
@@ -50,6 +44,27 @@ namespace pacman
 
             string username = (args.Length > 1) ? args[1] : endpoint.Port.ToString("D4");
             int msec = (args.Length > 3) ? Int32.Parse(args[3]) : 100;
+
+
+            List<string[]> lines = new List<string[]>();
+
+            if (args.Length > 4)
+            {
+                var linesStr = File.ReadAllLines(args[4]);
+                foreach (string line in linesStr)
+                {
+                    if (line.Trim() != "") lines.Add(line.Split(' '));
+                }
+            }
+            else
+            {
+                string line;
+                while ((line = Console.ReadLine()) != null)
+                {
+                    if (line.Trim() != "") lines.Add(line.Split(' '));
+                }
+            }
+
 
             Console.WriteLine("URI:\t{0}", endpoint);
             Console.WriteLine("PID:\t{0}", username);
