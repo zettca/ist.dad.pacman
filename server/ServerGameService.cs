@@ -122,47 +122,19 @@ namespace server
 
         private void GameStart()
         {
-            foreach (var client in clients)
-            {
-                client.Conn.SendGameStart(gameInstance.CurrentState.Data, ClientUris);
-            }
+            // TODO: handle exceptions
+            clients.ForEach((cli) => cli.Conn.SendGameStart(gameInstance.CurrentState.Data, ClientUris));
         }
-
         private void GameEnd()
         {
-            PacmanGameState gameState = (PacmanGameState)gameInstance.CurrentState;
-            string winnerId = gameState.PlayerData.First().ID;
-            int maxScore = 0;
-
-            foreach (var player in gameState.PlayerData)
-            {
-                if (player.Score > maxScore)
-                {
-                    maxScore = player.Score;
-                    winnerId = player.ID;
-                }
-            }
-
-            foreach (var client in clients)
-            {
-                client.Conn.SendScoreboard(winnerId);
-            }
+            // TODO: handle exceptions
+            clients.ForEach((cli) => cli.Conn.SendGameEnd(gameInstance.CurrentState.Data));
         }
 
         private void SendGameState()
         {
-            foreach (var client in clients)
-            {
-                try
-                {
-                    client.Conn.SendGameState(gameInstance.CurrentState.Data);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-            }
-
+            // TODO: handle exceptions
+            clients.ForEach((cli) => cli.Conn.SendGameState(gameInstance.CurrentState.Data));
         }
 
         public void SendKeys(string pid, bool[] keys)

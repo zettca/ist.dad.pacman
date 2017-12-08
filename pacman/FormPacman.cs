@@ -161,7 +161,7 @@ namespace pacman
             tbChat.Text += msg.ToString();
         }
 
-        public void UpdateGame(PacmanGameData gameData)
+        internal void UpdateGame(PacmanGameData gameData)
         {
             numRounds++;
             updateGameDataByRound(gameData);
@@ -219,7 +219,7 @@ namespace pacman
             gameDataByRound.Add(result);
         }
 
-        public void DrawGame(PacmanGameData gameData)
+        internal void DrawGame(PacmanGameData gameData)
         {
             updateGameDataByRound(gameData);
 
@@ -263,6 +263,17 @@ namespace pacman
             if (dir.Y < 0) return imgUp;
 
             return null;
+        }
+
+        internal void EndGame(PacmanGameData data)
+        {
+            foreach (var player in data.PlayerData)
+            {
+                if (player.ID == userID)
+                {
+                    labelTitle.Text = "Game Ended!";
+                }
+            }
         }
 
         private void BroadcastMessage(ChatMessage msg) =>
@@ -314,8 +325,8 @@ namespace pacman
         public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);
 
-        public void SendScoreboard(string winnerId) =>
-            SendMessage(new ChatMessage(null, "SERVER", form.WinnerMessage(winnerId)));
+        public void SendGameEnd(IGameData data) =>
+            form.Invoke(new GameHandler(form.EndGame), (PacmanGameData)data);
 
         public void GlobalStatus()
         {

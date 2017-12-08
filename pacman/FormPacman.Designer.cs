@@ -47,7 +47,7 @@
             // 
             this.labelTitle.AutoSize = true;
             this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelTitle.Location = new System.Drawing.Point(443, 25);
+            this.labelTitle.Location = new System.Drawing.Point(432, 25);
             this.labelTitle.Name = "labelTitle";
             this.labelTitle.Size = new System.Drawing.Size(76, 24);
             this.labelTitle.TabIndex = 72;
@@ -83,7 +83,7 @@
             // labelForPos
             // 
             this.labelForPos.AutoSize = true;
-            this.labelForPos.Location = new System.Drawing.Point(444, 12);
+            this.labelForPos.Location = new System.Drawing.Point(433, 12);
             this.labelForPos.Name = "labelForPos";
             this.labelForPos.Size = new System.Drawing.Size(44, 13);
             this.labelForPos.TabIndex = 146;

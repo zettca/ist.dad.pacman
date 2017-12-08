@@ -61,7 +61,7 @@ namespace services
     {
         Uri Uri { get; }
 
-        void SendScoreboard(string winnerID);
+        void SendGameEnd(IGameData data);
         void SendGameStart(IGameData data, List<Uri> peerEndpoints);
         void SendGameState(IGameData data);
         void SendMessage(ChatMessage message);

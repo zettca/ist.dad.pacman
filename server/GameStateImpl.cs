@@ -53,7 +53,7 @@ namespace server
             {
                 PlayerData.Add(
                     new PlayerData(playerIDs[i],
-                        new Vec2(8, TILE_SIZE * (i + 1)),
+                        new Vec2(8, (TILE_SIZE * i) % (8 * TILE_SIZE)),
                         new Vec2(PACMAN_SIZE, PACMAN_SIZE)));
             }
 
@@ -107,18 +107,9 @@ namespace server
                 ProcessCollision(player);
             }
 
-            foreach (var ghost in GhostData)
-            {
-                ghost.Position = UpdateGhostPosition(ghost);
-            }
+            GhostData.ForEach((ghost) => ghost.Position = UpdateGhostPosition(ghost));
 
             return this;
-        }
-
-        private int UpdateDir(bool isdown, int dir, int dir2)
-        {
-            int MULT = (isdown) ? 1 : 0;
-            return (dir == dir2) ? -dir2 * MULT : dir;
         }
 
         private Vec2 UpdateDirection(Vec2 dir, PlayerAction action)
