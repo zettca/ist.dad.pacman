@@ -47,6 +47,8 @@ namespace services
     public interface IGameData
     {
         List<PlayerData> PlayerData { get; }
+
+        IGameData Copy();
     }
 
     // Client >> Server

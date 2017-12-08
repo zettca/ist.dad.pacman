@@ -33,10 +33,10 @@ namespace services
     [Serializable]
     public class PacmanGameData : IGameData
     {
-        private List<PlayerData> playerData;
-        private List<EntityData> ghostData;
-        private List<EntityData> foodData;
-        private List<EntityData> wallData;
+        internal List<PlayerData> playerData;
+        internal List<EntityData> ghostData;
+        internal List<EntityData> foodData;
+        internal List<EntityData> wallData;
 
         public List<PlayerData> PlayerData { get => playerData; }
         public List<EntityData> GhostData { get => ghostData; }
@@ -49,6 +49,17 @@ namespace services
             ghostData = new List<EntityData>();
             foodData = new List<EntityData>();
             wallData = new List<EntityData>();
+        }
+
+        public IGameData Copy()
+        {
+            return new PacmanGameData
+            {
+                playerData = new List<PlayerData>(PlayerData),
+                ghostData = new List<EntityData>(GhostData),
+                foodData = new List<EntityData>(FoodData),
+                wallData = new List<EntityData>(WallData),
+            };
         }
     }
 

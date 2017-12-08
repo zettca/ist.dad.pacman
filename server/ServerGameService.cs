@@ -32,6 +32,7 @@ namespace server
         List<Uri> ClientUris { get => clients.Select((cli) => cli.Uri).ToList(); }
         List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
         List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
+        IGameData GameData { get => gameInstance.CurrentState.Data; }
 
         ServerGameService()
         {
@@ -110,7 +111,7 @@ namespace server
                 playerActions.Clear();
                 gameInstance.ApplyTransitions(actionsToProcess);
                 gameInstance.ApplyTick();
-                updateGameDataByRound(gameInstance.CurrentState.Data as PacmanGameData);
+                updateGameDataByRound(GameData as PacmanGameData);
 
                 new Thread(() => SendGameState()).Start();
                 Thread.Sleep(Program.msec);
@@ -123,18 +124,34 @@ namespace server
         private void GameStart()
         {
             // TODO: handle exceptions
-            clients.ForEach((cli) => cli.Conn.SendGameStart(gameInstance.CurrentState.Data, ClientUris));
+            IGameData gameData;
+            lock (this)
+            {
+                gameData = GameData.Copy();
+            }
+            ClientConns.ForEach((cli) => cli.SendGameStart(gameData, ClientUris));
         }
+
         private void GameEnd()
         {
             // TODO: handle exceptions
-            clients.ForEach((cli) => cli.Conn.SendGameEnd(gameInstance.CurrentState.Data));
+            IGameData gameData;
+            lock (this)
+            {
+                gameData = GameData.Copy();
+            }
+            ClientConns.ForEach((cli) => cli.SendGameEnd(gameData));
         }
 
         private void SendGameState()
         {
             // TODO: handle exceptions
-            clients.ForEach((cli) => cli.Conn.SendGameState(gameInstance.CurrentState.Data));
+            IGameData gameData;
+            lock (this)
+            {
+                gameData = GameData.Copy();
+            }
+            ClientConns.ForEach((cli) => cli.SendGameState(gameData));
         }
 
         public void SendKeys(string pid, bool[] keys)
