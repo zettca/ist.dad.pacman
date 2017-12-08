@@ -59,29 +59,26 @@ namespace services
 
         public int Score { get => score; set => score = value; }
 
-        public PlayerData(Vec2 pos, Vec2 size) : this(Guid.NewGuid(), pos, size) { }
+        public PlayerData(string pid, Vec2 pos, Vec2 size) : this(pid, pos, size, 0, true) { }
 
-        public PlayerData(Guid pid, Vec2 pos, Vec2 size) : this(pid, pos, size, 0, true) { }
-
-        public PlayerData(Guid pid, Vec2 pos, Vec2 size, int score, bool alive) :
-            base(pos, new Vec2(0, 0), size, alive)
+        public PlayerData(string pid, Vec2 pos, Vec2 size, int score, bool alive) :
+            base(pid, pos, new Vec2(0, 0), size, alive)
         {
-            Pid = pid;
             Score = score;
         }
 
         public override string ToString() =>
-            String.Format("{0}, {1}, {2}, {3}", Pid, (Alive) ? "P" : "L", Position.X, Position.Y);
+            String.Format("{0}, {1}, {2}, {3}", ID, (Alive) ? "P" : "L", Position.X, Position.Y);
     }
 
     [Serializable]
     public class EntityData
     {
-        private Guid pid;
+        private string entityID;
         private bool alive;
         private Vec2 position, direction, size;
 
-        public Guid Pid { get => pid; set => pid = value; }
+        public string ID { get => entityID; set => entityID = value; }
         public bool Alive { get => alive; set => alive = value; }
         public Vec2 Position { get => position; set => position = value; }
         public Vec2 Direction { get => direction; set => direction = value; }
@@ -91,11 +88,11 @@ namespace services
 
         public EntityData(Vec2 pos, Vec2 dir, Vec2 size) : this(pos, dir, size, true) { }
 
-        public EntityData(Vec2 pos, Vec2 dir, Vec2 size, bool alive) : this(Guid.NewGuid(), pos, dir, size, alive) { }
+        public EntityData(Vec2 pos, Vec2 dir, Vec2 size, bool alive) : this(" ", pos, dir, size, alive) { }
 
-        public EntityData(Guid guid, Vec2 pos, Vec2 dir, Vec2 size, bool alive)
+        public EntityData(string id, Vec2 pos, Vec2 dir, Vec2 size, bool alive)
         {
-            Pid = guid;
+            ID = id;
             Position = pos;
             Direction = dir;
             Size = size;
@@ -103,6 +100,6 @@ namespace services
         }
 
         public override string ToString() =>
-            String.Format("{0}, {1}, {2}", "W", Position.X, Position.Y);
+            String.Format("{0}, {1}, {2}", entityID.Substring(0, 1), Position.X, Position.Y);
     }
 }

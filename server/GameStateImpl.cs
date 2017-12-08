@@ -41,7 +41,7 @@ namespace server
         public bool HasEnded => !AnyPlayerAlive(PlayerData) || !AnyEntityAlive(FoodData);
 
 
-        public PacmanGameState(List<Guid> playerIDs, int numPlayers, int windowX, int windowY)
+        public PacmanGameState(List<string> playerIDs, int numPlayers, int windowX, int windowY)
         {
             gameData = new PacmanGameData();
             this.windowX = windowX;
@@ -76,12 +76,12 @@ namespace server
             }
         }
 
-        public PlayerData GetPlayer(Guid pid) =>
-            PlayerData.FirstOrDefault((player) => player.Pid == pid);
+        public PlayerData GetPlayer(string pid) =>
+            PlayerData.FirstOrDefault((player) => player.ID == pid);
 
         public IGameState ApplyAction(PlayerAction action)
         {
-            PlayerData player = GetPlayer(action.pid);
+            PlayerData player = GetPlayer(action.playerID);
 
             if (player == null || !player.Alive) return this;
 

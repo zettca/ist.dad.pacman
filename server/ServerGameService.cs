@@ -9,14 +9,12 @@ namespace server
     struct ServiceClient
     {
         public Uri Uri;
-        public Guid UID;
         public string Name;
         public IGameClient Conn;
 
-        public ServiceClient(Uri endpoint, Guid uid, string username, IGameClient conn)
+        public ServiceClient(Uri endpoint, string username, IGameClient conn)
         {
             Uri = endpoint;
-            UID = uid;
             Name = username;
             Conn = conn;
         }
@@ -30,7 +28,6 @@ namespace server
         StateMachine gameInstance;
 
         List<Uri> ClientUris { get => clients.Select((cli) => cli.Uri).ToList(); }
-        List<Guid> ClientIds { get => clients.Select((cli) => cli.UID).ToList(); }
         List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
         List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
 
@@ -46,7 +43,7 @@ namespace server
             switch (gameId)
             {
                 case "pacman":
-                    return new PacmanGameState(ClientIds, Program.numPlayers, 300, 300);
+                    return new PacmanGameState(ClientNames, Program.numPlayers, 300, 300);
                 default:
                     return null;
             }
@@ -58,11 +55,11 @@ namespace server
             new Thread(() => GameInstanceThread()).Start();
         }
 
-        public Guid RegisterPlayer(Uri endpoint, string username)
+        public bool RegisterPlayer(Uri endpoint, string userID)
         {
             Console.WriteLine("Trying to register new player at " + endpoint);
-            if (clients.Count >= Program.numPlayers || clients.Exists((cli) => cli.Name == username))
-                return Guid.Empty;
+            if (clients.Count >= Program.numPlayers || clients.Exists((cli) => cli.Name == userID))
+                return false;
 
             IGameClient clientConnection = (IGameClient)Activator.GetObject(
                 typeof(IGameClient), endpoint.AbsoluteUri);
@@ -70,21 +67,19 @@ namespace server
             Console.WriteLine("AbsoluteUri: " + endpoint.AbsoluteUri);
 
             if (clientConnection == null)
-                Console.WriteLine("\tFailed to get remote object.");
-
-            Guid clientGuid = Guid.NewGuid();
-
-            clients.Add(new ServiceClient(endpoint, clientGuid, username, clientConnection));
-
-            Console.WriteLine("New client \"(" + username + ")\" connected at " + endpoint);
-            Console.WriteLine(clientConnection.Uri);
-
-            if (clients.Count == Program.numPlayers)
             {
-                StartGame(Program.gameName);
+                Console.WriteLine("\tFailed to get remote object.");
+                return false;
             }
 
-            return clientGuid;
+            clients.Add(new ServiceClient(endpoint, userID, clientConnection));
+
+            Console.WriteLine("New client ({0}) connected at {1} | {2}",
+                userID, endpoint, clientConnection.Uri);
+
+            if (clients.Count == Program.numPlayers) StartGame(Program.gameName);
+
+            return true;
         }
 
         private void GameInstanceThread()
@@ -117,7 +112,7 @@ namespace server
         private void GameEnd()
         {
             PacmanGameState gameState = (PacmanGameState)gameInstance.CurrentState;
-            Guid winnerId = gameState.PlayerData.First().Pid;
+            string winnerId = gameState.PlayerData.First().ID;
             int maxScore = 0;
 
             foreach (var player in gameState.PlayerData)
@@ -125,7 +120,7 @@ namespace server
                 if (player.Score > maxScore)
                 {
                     maxScore = player.Score;
-                    winnerId = player.Pid;
+                    winnerId = player.ID;
                 }
             }
 
@@ -151,10 +146,10 @@ namespace server
 
         }
 
-        public void SendKey(Guid pid, int keyValue, bool isKeyDown)
+        public void SendKey(string pid, int keyValue, bool isKeyDown)
         {
             playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
-            Console.WriteLine("INPUT from {0}: {1} {2}", pid.ToString().Substring(0, 6), keyValue, isKeyDown);
+            Console.WriteLine("INPUT from {0}: {1} {2}", pid, keyValue, isKeyDown);
         }
 
         public void GlobalStatus()

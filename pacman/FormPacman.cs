@@ -12,9 +12,8 @@ namespace pacman
     public partial class FormPacman : Form
     {
         private string serverEndpoint;
-        private string username;
+        private string userID;
         IGameServer server;
-        Guid guid; // identifies the player on the server
         private PacmanClientService peerService;
         private List<IGameClient> peers = new List<IGameClient>();
         Uri uri;
@@ -33,7 +32,7 @@ namespace pacman
         public FormPacman(Uri uri, string username, int msec, string serverEndpoint, List<string[]> lines)
         {
             InitializeComponent();
-            this.username = username;
+            this.userID = username;
             this.Text = username + " - Pacman Client at " + uri;
             this.uri = uri;
             // msec not needed yet.
@@ -74,7 +73,7 @@ namespace pacman
                     return;
             }
 
-            server.SendKey(guid, e.KeyValue, true);
+            server.SendKey(userID, e.KeyValue, true);
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -97,7 +96,7 @@ namespace pacman
                     return;
             }
 
-            server.SendKey(guid, e.KeyValue, false);
+            server.SendKey(userID, e.KeyValue, false);
         }
 
         private void tbMsg_KeyDown(object sender, KeyEventArgs e)
@@ -105,7 +104,7 @@ namespace pacman
             if (e.KeyCode == Keys.Enter)
             {
                 if (tbMsg.Text.Trim().Length == 0) return;
-                ChatMessage msg = new ChatMessage(peerService.Clock, username, tbMsg.Text);
+                ChatMessage msg = new ChatMessage(peerService.Clock, userID, tbMsg.Text);
                 BroadcastMessage(msg);
                 AddMessage(msg);
 
@@ -117,7 +116,7 @@ namespace pacman
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            peerService = new PacmanClientService(uri, username);
+            peerService = new PacmanClientService(uri, userID);
             string objName = uri.AbsolutePath.Replace("/", "");
             Console.WriteLine("objName:\t{0}", objName);
             RemotingServices.Marshal(peerService, objName, typeof(PacmanClientService));
@@ -128,15 +127,13 @@ namespace pacman
             peerService.form = this;
             server = Activator.GetObject(typeof(IGameServer), serverEndpoint) as IGameServer;
 
-            guid = server.RegisterPlayer(uri, username);
-
-            if (guid == Guid.Empty)
+            if (!server.RegisterPlayer(uri, userID))
             {
                 MessageBox.Show("Server refused connection. Maybe room is already full?"); // TODO: handle with exception? ignore?
                 this.Close();
             }
-
         }
+
         private Dictionary<Uri, int> ClocksMax(Dictionary<Uri, int> a, Dictionary<Uri, int> b)
         {
             Dictionary<Uri, int> clocksMax = new Dictionary<Uri, int>();
@@ -164,7 +161,7 @@ namespace pacman
                 stdinLines.RemoveAt(0);
                 if (Int32.Parse(line?[0]) == numRounds)
                 {
-                    server.SendKey(guid, Int32.Parse(line[1]), Convert.ToBoolean(line[2]));
+                    server.SendKey(userID, Int32.Parse(line[1]), Convert.ToBoolean(line[2]));
                 }
                 else if (line?[0] == null)
                 {
@@ -174,12 +171,12 @@ namespace pacman
 
             foreach (var player in gameData.PlayerData)
             {
-                PictureBox pic = panelCanvas.Controls.Find(player.Pid.ToString(), true)[0] as PictureBox;
+                PictureBox pic = panelCanvas.Controls.Find(player.ID.ToString(), true)[0] as PictureBox;
                 Image img = GetPacmanDirectionImage(player.Direction);
                 pic.Location = new Point(player.Position.X, player.Position.Y);
                 if (!player.Alive) pic.BackColor = Color.Red;
                 if (img != null && pic.Image != img) pic.Image = img;
-                if (player.Pid == guid)
+                if (player.ID == userID)
                 {
                     labelTitle.Text = player.Position.ToString();
                     labelScore.Text = player.Score.ToString();
@@ -188,13 +185,13 @@ namespace pacman
 
             foreach (var ghost in gameData.GhostData)
             {
-                PictureBox pic = panelCanvas.Controls.Find(ghost.Pid.ToString(), true)[0] as PictureBox;
+                PictureBox pic = panelCanvas.Controls.Find(ghost.ID.ToString(), true)[0] as PictureBox;
                 pic.Location = new Point(ghost.Position.X, ghost.Position.Y);
             }
 
             foreach (var food in gameData.FoodData)
             {
-                PictureBox pic = panelCanvas.Controls.Find(food.Pid.ToString(), true)[0] as PictureBox;
+                PictureBox pic = panelCanvas.Controls.Find(food.ID.ToString(), true)[0] as PictureBox;
                 if (!food.Alive && pic.Visible) pic.Visible = false;
             }
         }
@@ -204,7 +201,7 @@ namespace pacman
             gameData.PlayerData.ForEach((player) =>
             {
                 PictureBox pic = CreatePictureForEntity(player, imgLeft);
-                if (player.Pid == guid) pic.BackColor = Color.Gray;
+                if (player.ID == userID) pic.BackColor = Color.Gray;
             });
 
             gameData.GhostData.ForEach((ghost) =>
@@ -220,7 +217,7 @@ namespace pacman
         {
             PictureBox pic = new PictureBox
             {
-                Name = entity.Pid.ToString(),
+                Name = entity.ID.ToString(),
                 Size = new Size(entity.Size.X, entity.Size.Y),
                 SizeMode = PictureBoxSizeMode.StretchImage,
                 Location = new Point(entity.Position.X, entity.Position.Y),
@@ -249,12 +246,11 @@ namespace pacman
             peers.Add((IGameClient)Activator.GetObject(typeof(IGameClient),
                 peerEndpoint.AbsoluteUri));
 
-        internal string WinnerMessage(Guid winnerId) =>
-            (winnerId == guid) ? "YOU WON!" : "You Lost :(";
+        internal string WinnerMessage(string winnerId) =>
+            (winnerId == userID) ? "YOU WON!" : "You Lost :(";
     }
 
     delegate void StringHandler(string msg);
-    delegate void GamerHandler(Guid winnerId);
     delegate void GameHandler(PacmanGameData data);
     delegate void MessageHandler(ChatMessage msg);
 
@@ -292,7 +288,7 @@ namespace pacman
         public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);
 
-        public void SendScoreboard(Guid winnerId) =>
+        public void SendScoreboard(string winnerId) =>
             SendMessage(new ChatMessage(null, "SERVER", form.WinnerMessage(winnerId)));
 
         public void GlobalStatus()

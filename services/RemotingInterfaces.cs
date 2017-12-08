@@ -5,14 +5,14 @@ namespace services
 {
     public struct PlayerAction
     {
-        public Guid pid;
+        public string playerID;
         public int keyValue;
         public bool isKeyDown;
-        public PlayerAction(Guid pid, int keyVal, bool isDown)
+        public PlayerAction(string pid, int keyVal, bool isDown)
         {
-            this.pid = pid;
-            this.keyValue = keyVal;
-            this.isKeyDown = isDown;
+            playerID = pid;
+            keyValue = keyVal;
+            isKeyDown = isDown;
         }
     }
 
@@ -54,8 +54,8 @@ namespace services
     // Client >> Server
     public interface IGameServer
     {
-        Guid RegisterPlayer(Uri endpoint, string username);
-        void SendKey(Guid from, int keyValue, bool isKeyDown);
+        bool RegisterPlayer(Uri endpoint, string userID);
+        void SendKey(string userID, int keyValue, bool isKeyDown);
     }
 
     // Server > Client; Client -> Client
@@ -63,7 +63,7 @@ namespace services
     {
         Uri Uri { get; }
 
-        void SendScoreboard(Guid winner);
+        void SendScoreboard(string winnerID);
         void SendGameStart(IGameData data, List<Uri> peerEndpoints);
         void SendGameState(IGameData data);
         void SendMessage(ChatMessage message);
