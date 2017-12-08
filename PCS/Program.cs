@@ -83,13 +83,13 @@ namespace pcs
             throw new NotImplementedException();
         }
 
-        public void LocalState(string pid, string round_id)
+        public List<string> LocalState(string pid, string round_id)
         {
             Uri uri = new Uri(urlByPid[pid]);
             ISlaveControl clientConnection = (ISlaveControl)Activator.GetObject(typeof(ISlaveControl),
                  uri.AbsoluteUri);
             List<string> result = clientConnection.LocalState(Int32.Parse(round_id));
-            result.ForEach((value) => Console.WriteLine(value));
+            return result;
         }
 
         public void StartClient(string pid, string client_url, string msec, string num_players, string file_name, string server_url)

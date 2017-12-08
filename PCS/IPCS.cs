@@ -8,7 +8,7 @@ namespace pcs
 {
     public interface IPCS
     {
-        void LocalState(string pid, string round_id);
+        List<string> LocalState(string pid, string round_id);
         void InjectDelay(string src_pid, string dst_pid);
         void Unfreeze(string pid);
         void Freeze(string pid);

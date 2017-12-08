@@ -25,7 +25,7 @@ namespace PuppetMaster
             {
                 Console.WriteLine("Reading file...");
                 var lines = File.ReadAllLines(args[0]);
-                foreach(string l in lines)
+                foreach (string l in lines)
                 {
                     parseLine(l);
                 }
@@ -41,7 +41,8 @@ namespace PuppetMaster
             }
         }
 
-        private static void parseLine(string line) {
+        private static void parseLine(string line)
+        {
             string[] parameters = line.Split(' ');
 
             if (parameters.Length <= 0)
@@ -140,7 +141,17 @@ namespace PuppetMaster
             try
             {
                 IPCS pcs = pcsByPID[pid];
-                pcs.LocalState(pid, round_id);
+                List<String> result = pcs.LocalState(pid, round_id);
+                string path = "..\\..\\LocalState-" + pid + '-' + round_id;
+                using (StreamWriter file = new StreamWriter(@path, false))
+                {
+                    result.ForEach((line) =>
+                    {
+                        file.WriteLine(line);
+                        //TODO Uncomment before submiting the project !
+                        //Console.WriteLine(line);
+                    });
+                }
             }
             catch (KeyNotFoundException e)
             {
