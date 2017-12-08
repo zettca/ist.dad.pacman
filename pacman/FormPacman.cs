@@ -189,7 +189,7 @@ namespace pacman
                 if (img != null && pic.Image != img) pic.Image = img;
                 if (player.ID == userID)
                 {
-                    labelTitle.Text = player.Position.ToString();
+                    labelState.Text = player.Position.ToString();
                     labelScore.Text = player.Score.ToString();
                 }
             }
@@ -271,7 +271,7 @@ namespace pacman
             {
                 if (player.ID == userID)
                 {
-                    labelTitle.Text = "Game Ended!";
+                    labelState.Text = "Game Ended!";
                 }
             }
         }
@@ -320,7 +320,7 @@ namespace pacman
         }
 
         public void SendGameState(IGameData data) =>
-            form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
+                form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
 
         public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);

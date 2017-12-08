@@ -25,33 +25,33 @@
         private void InitializeComponent() {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPacman));
             this.labelScore = new System.Windows.Forms.Label();
-            this.labelTitle = new System.Windows.Forms.Label();
+            this.labelState = new System.Windows.Forms.Label();
             this.tbMsg = new System.Windows.Forms.TextBox();
             this.tbChat = new System.Windows.Forms.TextBox();
             this.labelForScore = new System.Windows.Forms.Label();
-            this.labelForPos = new System.Windows.Forms.Label();
+            this.labelForState = new System.Windows.Forms.Label();
             this.panelCanvas = new System.Windows.Forms.Panel();
             this.SuspendLayout();
             // 
             // labelScore
             // 
             this.labelScore.AutoSize = true;
-            this.labelScore.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelScore.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelScore.Location = new System.Drawing.Point(366, 25);
             this.labelScore.Name = "labelScore";
-            this.labelScore.Size = new System.Drawing.Size(60, 24);
+            this.labelScore.Size = new System.Drawing.Size(51, 20);
             this.labelScore.TabIndex = 71;
             this.labelScore.Text = "Score";
             // 
-            // labelTitle
+            // labelState
             // 
-            this.labelTitle.AutoSize = true;
-            this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelTitle.Location = new System.Drawing.Point(432, 25);
-            this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(76, 24);
-            this.labelTitle.TabIndex = 72;
-            this.labelTitle.Text = "Position";
+            this.labelState.AutoSize = true;
+            this.labelState.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelState.Location = new System.Drawing.Point(422, 25);
+            this.labelState.Name = "labelState";
+            this.labelState.Size = new System.Drawing.Size(65, 20);
+            this.labelState.TabIndex = 72;
+            this.labelState.Text = "Position";
             // 
             // tbMsg
             // 
@@ -80,14 +80,14 @@
             this.labelForScore.TabIndex = 145;
             this.labelForScore.Text = "Score";
             // 
-            // labelForPos
+            // labelForState
             // 
-            this.labelForPos.AutoSize = true;
-            this.labelForPos.Location = new System.Drawing.Point(433, 12);
-            this.labelForPos.Name = "labelForPos";
-            this.labelForPos.Size = new System.Drawing.Size(44, 13);
-            this.labelForPos.TabIndex = 146;
-            this.labelForPos.Text = "Position";
+            this.labelForState.AutoSize = true;
+            this.labelForState.Location = new System.Drawing.Point(423, 12);
+            this.labelForState.Name = "labelForState";
+            this.labelForState.Size = new System.Drawing.Size(44, 13);
+            this.labelForState.TabIndex = 146;
+            this.labelForState.Text = "Position";
             // 
             // panelCanvas
             // 
@@ -105,11 +105,11 @@
             this.BackColor = System.Drawing.SystemColors.ControlDark;
             this.ClientSize = new System.Drawing.Size(543, 324);
             this.Controls.Add(this.panelCanvas);
-            this.Controls.Add(this.labelForPos);
+            this.Controls.Add(this.labelForState);
             this.Controls.Add(this.labelForScore);
             this.Controls.Add(this.tbChat);
             this.Controls.Add(this.tbMsg);
-            this.Controls.Add(this.labelTitle);
+            this.Controls.Add(this.labelState);
             this.Controls.Add(this.labelScore);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormPacman";
@@ -124,11 +124,11 @@
 
         #endregion
         private System.Windows.Forms.Label labelScore;
-        private System.Windows.Forms.Label labelTitle;
+        private System.Windows.Forms.Label labelState;
         private System.Windows.Forms.TextBox tbMsg;
         private System.Windows.Forms.TextBox tbChat;
         private System.Windows.Forms.Label labelForScore;
-        private System.Windows.Forms.Label labelForPos;
+        private System.Windows.Forms.Label labelForState;
         private System.Windows.Forms.Panel panelCanvas;
     }
 }
