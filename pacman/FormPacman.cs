@@ -340,14 +340,22 @@ namespace pacman
 
         public List<string> LocalState(int round)
         {
-
-            if (form.gameDataByRound.Count <= round)
+            lock (this)
             {
-                List<string> result = form.gameDataByRound[round - 1];
-                Console.WriteLine(result.ToString());
-                return result;
+                if (round <= form.gameDataByRound.Count)
+                {
+                    List<string> result = form.gameDataByRound[round - 1];
+                    return result;
+                }
+                else
+                {
+                    Console.WriteLine("Waiting for round : " + round + " on Client : " + this.username);
+                    while (form.gameDataByRound.Count < round)
+                        Console.WriteLine(form.gameDataByRound.Count);
+                    List<string> result = form.gameDataByRound[round - 1];
+                    return result;
+                }
             }
-            return new List<string>();
         }
     }
 }

@@ -191,13 +191,22 @@ namespace server
 
         public List<string> LocalState(int round)
         {
-            if (gameDataByRound.Count <= round)
+            lock (this)
             {
-                List<string> result = gameDataByRound[round - 1];
-                Console.WriteLine(result.ToString());
-                return result;
+                if (round <= gameDataByRound.Count)
+                {
+                    List<string> result = gameDataByRound[round - 1];
+                    return result;
+                }
+                else
+                {
+                    Console.WriteLine("Waiting for round : " + round + " on Server");
+                    while (gameDataByRound.Count < round)
+                        Console.WriteLine(gameDataByRound.Count);
+                    List<string> result = gameDataByRound[round - 1];
+                    return result;
+                }
             }
-            return new List<string>();
         }
     }
 }

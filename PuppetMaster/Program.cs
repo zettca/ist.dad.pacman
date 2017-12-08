@@ -93,7 +93,7 @@ namespace PuppetMaster
                 case "LocalState":
                     if (parameters.Length.Equals(3))
                     {
-                        new Thread(() => LocalState(parameters[1], parameters[2])).Start();
+                        LocalState(parameters[1], parameters[2]);
                     }
                     else
                         Console.WriteLine("Expected arguments: PID round_id");
@@ -125,12 +125,18 @@ namespace PuppetMaster
                 string path = "..\\..\\LocalState-" + pid + '-' + round_id;
                 using (StreamWriter file = new StreamWriter(@path, false))
                 {
-                    result.ForEach((line) =>
+                    if (result != null)
                     {
-                        file.WriteLine(line);
+                        result.ForEach((line) =>
+                        {
+                            file.WriteLine(line);
                         //TODO Uncomment before submiting the project !
                         //Console.WriteLine(line);
-                    });
+                        });
+                        Console.WriteLine(path + " GOOD");
+                    }
+                    else
+                        Console.WriteLine(path + " BAD");
                 }
             }
             catch (KeyNotFoundException e)
