@@ -62,22 +62,23 @@ namespace server
 
         private void DrawStaticMap()
         {
-            const int OFFSET_X = 8, OFFSET_Y = 40;
+            const int OFF_X = 8, OFF_Y = 40;
 
-            GhostData.Add(new EntityData("M", new Vec2(301 - OFFSET_X, 72 - OFFSET_Y), new Vec2(1, 1), new Vec2(GHOST_SIZE, GHOST_SIZE)));
-            GhostData.Add(new EntityData("M", new Vec2(221 - OFFSET_X, 273 - OFFSET_Y), new Vec2(1, 0), new Vec2(GHOST_SIZE, GHOST_SIZE)));
-            GhostData.Add(new EntityData("M", new Vec2(180 - OFFSET_X, 73 - OFFSET_Y), new Vec2(1, 0), new Vec2(GHOST_SIZE, GHOST_SIZE)));
+            GhostData.Add(new EntityData("M1", new Vec2(301 - OFF_X, 72 - OFF_Y), new Vec2(1, 1), new Vec2(GHOST_SIZE, GHOST_SIZE)));
+            GhostData.Add(new EntityData("M2", new Vec2(221 - OFF_X, 273 - OFF_Y), new Vec2(1, 0), new Vec2(GHOST_SIZE, GHOST_SIZE)));
+            GhostData.Add(new EntityData("M3", new Vec2(180 - OFF_X, 73 - OFF_Y), new Vec2(1, 0), new Vec2(GHOST_SIZE, GHOST_SIZE)));
 
-            WallData.Add(new EntityData("W", new Vec2(288 - OFFSET_X, 240 - OFFSET_Y), new Vec2(15, 95)));
-            WallData.Add(new EntityData("W", new Vec2(128 - OFFSET_X, 240 - OFFSET_Y), new Vec2(15, 95)));
-            WallData.Add(new EntityData("W", new Vec2(248 - OFFSET_X, 40 - OFFSET_Y), new Vec2(15, 95)));
-            WallData.Add(new EntityData("W", new Vec2(88 - OFFSET_X, 40 - OFFSET_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W1", new Vec2(288 - OFF_X, 240 - OFF_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W2", new Vec2(128 - OFF_X, 240 - OFF_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W3", new Vec2(248 - OFF_X, 40 - OFF_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W4", new Vec2(88 - OFF_X, 40 - OFF_Y), new Vec2(15, 95)));
 
             for (int i = 0; i < 9; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    FoodData.Add(new EntityData("C", new Vec2(TILE_SIZE * i, TILE_SIZE * j), new Vec2(COIN_SIZE, COIN_SIZE)));
+                    FoodData.Add(new EntityData("C" + i.ToString() + j.ToString(),
+                        new Vec2(TILE_SIZE * i, TILE_SIZE * j), new Vec2(COIN_SIZE, COIN_SIZE)));
                 }
             }
         }

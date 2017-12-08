@@ -210,7 +210,7 @@ namespace pacman
                 if (player.ID == userID) pic.BackColor = Color.Gray;
             });
 
-            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, null, 1));
+            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, Properties.Resources.cccc, 1));
         }
 
         private PictureBox CreatePictureForEntity(EntityData entity, Image image, int zIndex)

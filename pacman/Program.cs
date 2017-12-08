@@ -43,7 +43,7 @@ namespace pacman
             }
 
             string username = (args.Length > 1) ? args[1] : endpoint.Port.ToString("D4");
-            int msec = (args.Length > 3) ? Int32.Parse(args[3]) : 100;
+            int msec = (args.Length > 3) ? Int32.Parse(args[3]) : 20;
 
 
             List<string[]> lines = new List<string[]>();
