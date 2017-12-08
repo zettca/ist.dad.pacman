@@ -5,14 +5,12 @@ namespace services
 {
     public struct PlayerAction
     {
-        public string playerID;
-        public int keyValue;
-        public bool isKeyDown;
-        public PlayerAction(string pid, int keyVal, bool isDown)
+        public string PID;
+        public bool[] Keys;
+        public PlayerAction(string pid, bool[] keys)
         {
-            playerID = pid;
-            keyValue = keyVal;
-            isKeyDown = isDown;
+            PID = pid;
+            Keys = keys;
         }
     }
 
@@ -55,7 +53,7 @@ namespace services
     public interface IGameServer
     {
         bool RegisterPlayer(Uri endpoint, string userID);
-        void SendKey(string userID, int keyValue, bool isKeyDown);
+        void SendKeys(string userID, bool[] keys);
     }
 
     // Server > Client; Client -> Client

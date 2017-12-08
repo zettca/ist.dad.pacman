@@ -146,10 +146,10 @@ namespace server
 
         }
 
-        public void SendKey(string pid, int keyValue, bool isKeyDown)
+        public void SendKeys(string pid, bool[] keys)
         {
-            playerActions.Add(new PlayerAction(pid, keyValue, isKeyDown));
-            Console.WriteLine("INPUT from {0}: {1} {2}", pid, keyValue, isKeyDown);
+            playerActions.Add(new PlayerAction(pid, keys));
+            Console.WriteLine("INPUT from {0}: {1}", pid, String.Join(" ", keys));
         }
 
         public void GlobalStatus()

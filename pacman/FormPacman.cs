@@ -45,6 +45,12 @@ namespace pacman
             }
         }
 
+        private void SendKeys()
+        {
+            bool[] keys = { goleft, goup, goright, godown };
+            server.SendKeys(userID, keys);
+        }
+
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
@@ -73,7 +79,7 @@ namespace pacman
                     return;
             }
 
-            server.SendKey(userID, e.KeyValue, true);
+            SendKeys();
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -96,7 +102,7 @@ namespace pacman
                     return;
             }
 
-            server.SendKey(userID, e.KeyValue, false);
+            SendKeys();
         }
 
         private void tbMsg_KeyDown(object sender, KeyEventArgs e)
@@ -161,7 +167,7 @@ namespace pacman
                 stdinLines.RemoveAt(0);
                 if (Int32.Parse(line?[0]) == numRounds)
                 {
-                    server.SendKey(userID, Int32.Parse(line[1]), Convert.ToBoolean(line[2]));
+                    server.SendKeys(userID, new bool[] { });
                 }
                 else if (line?[0] == null)
                 {

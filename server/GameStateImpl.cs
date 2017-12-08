@@ -91,7 +91,7 @@ namespace server
 
         public IGameState ApplyAction(PlayerAction action)
         {
-            PlayerData player = GetPlayer(action.playerID);
+            PlayerData player = GetPlayer(action.PID);
 
             if (player == null || !player.Alive) return this;
 
@@ -115,22 +115,23 @@ namespace server
             return this;
         }
 
+        private int UpdateDir(bool isdown, int dir, int dir2)
+        {
+            int MULT = (isdown) ? 1 : 0;
+            return (dir == dir2) ? -dir2 * MULT : dir;
+        }
+
         private Vec2 UpdateDirection(Vec2 dir, PlayerAction action)
         {
-            int MULT = (action.isKeyDown) ? 1 : 0;
-            switch (action.keyValue)
-            {
-                case 37: // left
-                    return new Vec2(-1 * MULT, dir.Y);
-                case 38: // up
-                    return new Vec2(dir.X, -1 * MULT);
-                case 39: // right
-                    return new Vec2(1 * MULT, dir.Y);
-                case 40: // down
-                    return new Vec2(dir.X, 1 * MULT);
-                default:
-                    return dir;
-            }
+            Vec2 newDir = new Vec2(0, 0);
+
+            // left, up, right, down
+            if (action.Keys[0]) newDir.X = -1;
+            if (action.Keys[1]) newDir.Y = -1;
+            if (action.Keys[2]) newDir.X = 1;
+            if (action.Keys[3]) newDir.Y = 1;
+
+            return newDir;
         }
 
         private Vec2 PositionStep(EntityData entity)
