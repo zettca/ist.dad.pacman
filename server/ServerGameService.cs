@@ -76,29 +76,34 @@ namespace server
 
         public bool RegisterPlayer(Uri endpoint, string userID)
         {
-            Console.WriteLine("Trying to register new player at " + endpoint);
-            if (clients.Count >= Program.numPlayers || clients.Exists((cli) => cli.Name == userID))
-                return false;
+            lock (this)
 
-            IGameClient clientConnection = (IGameClient)Activator.GetObject(
-                typeof(IGameClient), endpoint.AbsoluteUri);
-
-            Console.WriteLine("AbsoluteUri: " + endpoint.AbsoluteUri);
-
-            if (clientConnection == null)
             {
-                Console.WriteLine("\tFailed to get remote object.");
-                return false;
+
+                Console.WriteLine("Trying to register new player at " + endpoint);
+                if (clients.Count >= Program.numPlayers || clients.Exists((cli) => cli.Name == userID))
+                    return false;
+
+                IGameClient clientConnection = (IGameClient)Activator.GetObject(
+                    typeof(IGameClient), endpoint.AbsoluteUri);
+
+                Console.WriteLine("AbsoluteUri: " + endpoint.AbsoluteUri);
+
+                if (clientConnection == null)
+                {
+                    Console.WriteLine("\tFailed to get remote object.");
+                    return false;
+                }
+
+                clients.Add(new ServiceClient(endpoint, userID, clientConnection));
+
+                Console.WriteLine("New client ({0}) connected at {1} | {2}",
+                    userID, endpoint, clientConnection.Uri);
+
+                if (clients.Count == Program.numPlayers) StartGame(Program.gameName);
+
+                return true;
             }
-
-            clients.Add(new ServiceClient(endpoint, userID, clientConnection));
-
-            Console.WriteLine("New client ({0}) connected at {1} | {2}",
-                userID, endpoint, clientConnection.Uri);
-
-            if (clients.Count == Program.numPlayers) StartGame(Program.gameName);
-
-            return true;
         }
 
         private void GameInstanceThread()
