@@ -185,6 +185,16 @@ namespace server
                 {
                     player.Alive = false;
                     player.Direction = new Vec2(0, 0);
+                    return;
+                }
+            }
+
+            foreach (var wall in WallData)
+            {
+                if (DoBoxesIntersect(player, wall))
+                {
+                    player.Direction = new Vec2(0, 0);
+                    return;
                 }
             }
 
@@ -194,14 +204,6 @@ namespace server
                 {
                     food.Alive = false;
                     player.Score += 10;
-                }
-            }
-
-            foreach (var wall in WallData)
-            {
-                if (DoBoxesIntersect(player, wall))
-                {
-                    player.Direction = new Vec2(0, 0);
                 }
             }
         }

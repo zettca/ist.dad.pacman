@@ -29,7 +29,7 @@ namespace server
             try
             {
                 endpoint = new Uri(args.Length > 0 ? args[0] : "tcp://localhost:8086/OGPGameServer");
-                msec = (args.Length > 1) ? Int32.Parse(args[1]) : 100;
+                msec = (args.Length > 1) ? Int32.Parse(args[1]) : 20;
                 numPlayers = (args.Length > 2) ? Int32.Parse(args[2]) : 2;
             }
             catch (Exception ex)
