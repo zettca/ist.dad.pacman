@@ -27,6 +27,8 @@ namespace server
         List<PlayerAction> playerActions;
         StateMachine gameInstance;
 
+        internal List<List<string>> gameDataByRound;
+
         List<Uri> ClientUris { get => clients.Select((cli) => cli.Uri).ToList(); }
         List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
         List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
@@ -36,6 +38,8 @@ namespace server
             clients = new List<ServiceClient>();
             messages = new List<ChatMessage>();
             playerActions = new List<PlayerAction>();
+
+            this.gameDataByRound = new List<List<string>>();
         }
 
         private IGameState GetInitialGameState(string gameId)
@@ -49,9 +53,23 @@ namespace server
             }
         }
 
+        public void updateGameDataByRound(PacmanGameData gameData)
+        {
+            List<string> result = new List<string>();
+
+            gameData.PlayerData.ForEach((player) => result.Add(player.ToString()));
+            gameData.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
+            gameData.WallData.ForEach((wall) => result.Add(wall.ToString()));
+            gameData.FoodData.ForEach((food) => result.Add(food.ToString()));
+
+            gameDataByRound.Add(result);
+        }
+
         private void StartGame(string gameId)
         {
-            gameInstance = new StateMachine(GetInitialGameState(gameId));
+            PacmanGameState gameState = GetInitialGameState(gameId) as PacmanGameState;
+            gameInstance = new StateMachine(gameState);
+            updateGameDataByRound(gameState.Data as PacmanGameData);
             new Thread(() => GameInstanceThread()).Start();
         }
 
@@ -92,6 +110,7 @@ namespace server
                 playerActions.Clear();
                 gameInstance.ApplyTransitions(actionsToProcess);
                 gameInstance.ApplyTick();
+                updateGameDataByRound(gameInstance.CurrentState.Data as PacmanGameData);
 
                 new Thread(() => SendGameState()).Start();
                 Thread.Sleep(Program.msec);
@@ -164,7 +183,7 @@ namespace server
 
         public List<string> LocalState(int round)
         {
-            throw new NotImplementedException();
+            return gameDataByRound[round];
         }
     }
 }
