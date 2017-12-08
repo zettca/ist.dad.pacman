@@ -202,15 +202,15 @@ namespace pacman
                 CreatePictureForEntity(food, Properties.Resources.cccc, 100));
 
             gameData.GhostData.ForEach((ghost) =>
-                CreatePictureForEntity(ghost, Properties.Resources.pink_guy, 2));
+                CreatePictureForEntity(ghost, Properties.Resources.pink_guy, 5));
 
             gameData.PlayerData.ForEach((player) =>
             {
-                PictureBox pic = CreatePictureForEntity(player, imgLeft, 3);
+                PictureBox pic = CreatePictureForEntity(player, imgLeft, 2);
                 if (player.ID == userID) pic.BackColor = Color.Gray;
             });
 
-            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, Properties.Resources.cccc, 1));
+            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, null, 4));
         }
 
         private PictureBox CreatePictureForEntity(EntityData entity, Image image, int zIndex)

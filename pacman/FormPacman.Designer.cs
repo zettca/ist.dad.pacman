@@ -23,6 +23,7 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPacman));
             this.labelScore = new System.Windows.Forms.Label();
             this.labelTitle = new System.Windows.Forms.Label();
             this.tbMsg = new System.Windows.Forms.TextBox();
@@ -45,10 +46,10 @@
             // labelTitle
             // 
             this.labelTitle.AutoSize = true;
-            this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelTitle.Location = new System.Drawing.Point(442, 23);
+            this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelTitle.Location = new System.Drawing.Point(443, 25);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(90, 26);
+            this.labelTitle.Size = new System.Drawing.Size(76, 24);
             this.labelTitle.TabIndex = 72;
             this.labelTitle.Text = "Position";
             // 
@@ -110,6 +111,7 @@
             this.Controls.Add(this.tbMsg);
             this.Controls.Add(this.labelTitle);
             this.Controls.Add(this.labelScore);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormPacman";
             this.Text = "DADman";
             this.Load += new System.EventHandler(this.Form1_Load);

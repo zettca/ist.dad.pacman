@@ -77,8 +77,11 @@ namespace server
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    FoodData.Add(new EntityData("C" + i.ToString() + j.ToString(),
-                        new Vec2(TILE_SIZE * i, TILE_SIZE * j), new Vec2(COIN_SIZE, COIN_SIZE)));
+                    if (!(i == 2 && j <= 2 || i == 6 && j <= 2 || i == 3 && j >= 5 || i == 7 && j >= 5))
+                    {
+                        FoodData.Add(new EntityData("C" + i.ToString() + j.ToString(),
+                            new Vec2(TILE_SIZE * i, TILE_SIZE * j), new Vec2(COIN_SIZE, COIN_SIZE)));
+                    }
                 }
             }
         }
@@ -171,8 +174,10 @@ namespace server
 
         private bool DoBoxesIntersect(EntityData e1, EntityData e2)
         {
-            return (Math.Abs(e1.Position.X - e2.Position.X) * 2 < (e1.Size.X + e2.Size.X)) &&
-                   (Math.Abs(e1.Position.Y - e2.Position.Y) * 2 < (e1.Size.Y + e2.Size.Y));
+            return !(e2.Position.X > e1.Position.X + e1.Size.X
+                    || e2.Position.X + e2.Size.X < e1.Position.X
+                    || e2.Position.Y > e1.Position.Y + e1.Size.Y
+                    || e2.Position.Y + e2.Size.Y < e1.Position.Y);
         }
 
         private void ProcessCollision(PlayerData player)
