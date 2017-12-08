@@ -198,22 +198,22 @@ namespace pacman
 
         public void DrawGame(PacmanGameData gameData)
         {
+            gameData.FoodData.ForEach((food) =>
+                CreatePictureForEntity(food, Properties.Resources.cccc, 100));
+
+            gameData.GhostData.ForEach((ghost) =>
+                CreatePictureForEntity(ghost, Properties.Resources.pink_guy, 2));
+
             gameData.PlayerData.ForEach((player) =>
             {
-                PictureBox pic = CreatePictureForEntity(player, imgLeft);
+                PictureBox pic = CreatePictureForEntity(player, imgLeft, 3);
                 if (player.ID == userID) pic.BackColor = Color.Gray;
             });
 
-            gameData.GhostData.ForEach((ghost) =>
-                CreatePictureForEntity(ghost, Properties.Resources.pink_guy));
-
-            gameData.FoodData.ForEach((food) =>
-                CreatePictureForEntity(food, Properties.Resources.cccc));
-
-            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, null));
+            gameData.WallData.ForEach((wall) => CreatePictureForEntity(wall, null, 1));
         }
 
-        private PictureBox CreatePictureForEntity(EntityData entity, Image image)
+        private PictureBox CreatePictureForEntity(EntityData entity, Image image, int zIndex)
         {
             PictureBox pic = new PictureBox
             {
@@ -226,6 +226,7 @@ namespace pacman
                 Image = image,
             };
             panelCanvas.Controls.Add(pic);
+            panelCanvas.Controls.SetChildIndex(pic, zIndex);
             return pic;
         }
 

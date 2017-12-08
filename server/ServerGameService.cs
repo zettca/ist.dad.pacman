@@ -43,7 +43,7 @@ namespace server
             switch (gameId)
             {
                 case "pacman":
-                    return new PacmanGameState(ClientNames, Program.numPlayers, 320, 320);
+                    return new PacmanGameState(ClientNames, Program.numPlayers, 348, 305);
                 default:
                     return null;
             }

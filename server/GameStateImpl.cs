@@ -26,7 +26,9 @@ namespace server
     {
         const int
             SPEED = 2,
-            SIZE = 30,
+            PACMAN_SIZE = 25,
+            GHOST_SIZE = 30,
+            COIN_SIZE = 15,
             TILE_SIZE = 40;
 
         private int windowX, windowY;
@@ -52,7 +54,7 @@ namespace server
                 PlayerData.Add(
                     new PlayerData(playerIDs[i],
                         new Vec2(8, TILE_SIZE * (i + 1)),
-                        new Vec2(SIZE, SIZE)));
+                        new Vec2(PACMAN_SIZE, PACMAN_SIZE)));
             }
 
             DrawStaticMap();
@@ -60,20 +62,22 @@ namespace server
 
         private void DrawStaticMap()
         {
-            GhostData.Add(new EntityData("M", new Vec2(301, 72), new Vec2(1, 1), new Vec2(SIZE, SIZE)));
-            GhostData.Add(new EntityData("M", new Vec2(221, 273), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
-            GhostData.Add(new EntityData("M", new Vec2(180, 73), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
+            const int OFFSET_X = 8, OFFSET_Y = 40;
 
-            WallData.Add(new EntityData("W", new Vec2(288, 240), new Vec2(15, 95)));
-            WallData.Add(new EntityData("W", new Vec2(128, 240), new Vec2(15, 95)));
-            WallData.Add(new EntityData("W", new Vec2(248, 40), new Vec2(15, 95)));
-            WallData.Add(new EntityData("W", new Vec2(88, 40), new Vec2(15, 95)));
+            GhostData.Add(new EntityData("M", new Vec2(301 - OFFSET_X, 72 - OFFSET_Y), new Vec2(1, 1), new Vec2(GHOST_SIZE, GHOST_SIZE)));
+            GhostData.Add(new EntityData("M", new Vec2(221 - OFFSET_X, 273 - OFFSET_Y), new Vec2(1, 0), new Vec2(GHOST_SIZE, GHOST_SIZE)));
+            GhostData.Add(new EntityData("M", new Vec2(180 - OFFSET_X, 73 - OFFSET_Y), new Vec2(1, 0), new Vec2(GHOST_SIZE, GHOST_SIZE)));
 
-            for (int i = 0; i < 8; i++)
+            WallData.Add(new EntityData("W", new Vec2(288 - OFFSET_X, 240 - OFFSET_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W", new Vec2(128 - OFFSET_X, 240 - OFFSET_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W", new Vec2(248 - OFFSET_X, 40 - OFFSET_Y), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W", new Vec2(88 - OFFSET_X, 40 - OFFSET_Y), new Vec2(15, 95)));
+
+            for (int i = 0; i < 9; i++)
             {
-                for (int j = 0; j < 7; j++)
+                for (int j = 0; j < 8; j++)
                 {
-                    FoodData.Add(new EntityData("C", new Vec2(8 + 40 * i, 40 + 40 * j), new Vec2(SIZE / 2, SIZE / 2)));
+                    FoodData.Add(new EntityData("C", new Vec2(TILE_SIZE * i, TILE_SIZE * j), new Vec2(COIN_SIZE, COIN_SIZE)));
                 }
             }
         }
