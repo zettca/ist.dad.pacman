@@ -6,17 +6,25 @@ using System.Threading;
 
 namespace server
 {
+    public enum ClientState
+    {
+        ALIVE, DEAD
+    }
+
     struct ServiceClient
     {
         public Uri Uri;
         public string Name;
         public IGameClient Conn;
+        public ClientState State;
+
 
         public ServiceClient(Uri endpoint, string username, IGameClient conn)
         {
             Uri = endpoint;
             Name = username;
             Conn = conn;
+            State = ClientState.ALIVE;
         }
     }
 
@@ -126,37 +134,43 @@ namespace server
             new Thread(() => GameEnd()).Start();
         }
 
-        private void GameStart()
+        private void GamesStuffs(Action<IGameClient> method)
         {
-            // TODO: handle exceptions
-            IGameData gameData;
             lock (this)
             {
-                gameData = GameData.Copy();
+                clients.ForEach((client) =>
+                {
+                    try
+                    {
+                        if (client.State == ClientState.ALIVE)
+                        {
+                            method(client.Conn);
+
+                        }
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        Console.WriteLine("Client {0} dropped", client.Name);
+                        client.State = ClientState.DEAD;
+                        // clients.Remove(client);
+                    }
+                });
             }
-            ClientConns.ForEach((cli) => cli.SendGameStart(gameData, ClientUris));
+        }
+
+        private void GameStart()
+        {
+            GamesStuffs((conn) => conn.SendGameStart(GameData, ClientUris));
         }
 
         private void GameEnd()
         {
-            // TODO: handle exceptions
-            IGameData gameData;
-            lock (this)
-            {
-                gameData = GameData.Copy();
-            }
-            ClientConns.ForEach((cli) => cli.SendGameEnd(gameData));
+            GamesStuffs((conn) => conn.SendGameEnd(GameData));
         }
 
         private void SendGameState()
         {
-            // TODO: handle exceptions
-            IGameData gameData;
-            lock (this)
-            {
-                gameData = GameData.Copy();
-            }
-            ClientConns.ForEach((cli) => cli.SendGameState(gameData));
+            GamesStuffs((conn) => conn.SendGameState(GameData));
         }
 
         public void SendKeys(string pid, bool[] keys)
