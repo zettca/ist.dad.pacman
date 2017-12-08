@@ -71,6 +71,6 @@ namespace services
     {
         void GlobalStatus();
         void InjectDelay();
-        void LocalState();
+        List<string> LocalState(int round);
     }
 }

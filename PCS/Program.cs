@@ -10,6 +10,7 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.ComponentModel;
 using System.Text;
 using System.Threading.Tasks;
+using services;
 
 namespace pcs
 {
@@ -49,6 +50,7 @@ namespace pcs
     public class PCSService : MarshalByRefObject, IPCS
     {
         private Dictionary<string, Process> processes = new Dictionary<string, Process>();
+        private Dictionary<string, string> urlByPid = new Dictionary<string, string>();
 
         public void Crash(string pid)
         {
@@ -56,6 +58,7 @@ namespace pcs
             {
                 Process p = processes[pid];
                 processes.Remove(pid);
+                urlByPid.Remove(pid);
                 if(!p.HasExited)
                     p.Kill();
             }
@@ -82,7 +85,11 @@ namespace pcs
 
         public void LocalState(string pid, string round_id)
         {
-            throw new NotImplementedException();
+            Uri uri = new Uri(urlByPid[pid]);
+            ISlaveControl clientConnection = (ISlaveControl)Activator.GetObject(typeof(ISlaveControl),
+                 uri.AbsoluteUri);
+            List<string> result = clientConnection.LocalState(Int32.Parse(round_id));
+            result.ForEach((value) => Console.WriteLine(value));
         }
 
         public void StartClient(string pid, string client_url, string msec, string num_players, string file_name, string server_url)
@@ -99,6 +106,7 @@ namespace pcs
                 if (processes[pid].HasExited)
                 {
                     processes.Remove(pid);
+                    urlByPid.Remove(pid);
                 }
             if (!processes.ContainsKey(pid))
             {
@@ -111,6 +119,7 @@ namespace pcs
                         + ((file_name != null) ? (" " + file_name) : "");
                     p.Start();
                     processes.Add(pid, p);
+                    urlByPid.Add(pid, client_url);
                 }
                 catch(InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
                 catch (Win32Exception) { Console.WriteLine("Couldn't Initialize the Client"); }
@@ -131,6 +140,7 @@ namespace pcs
                 if (processes[pid].HasExited)
                 {
                     processes.Remove(pid);
+                    urlByPid.Remove(pid);
                 }
             if (!processes.ContainsKey(pid))
             {
@@ -142,6 +152,7 @@ namespace pcs
                     p.StartInfo.Arguments = server_url + " " + msec + " " + num_players;
                     p.Start();
                     processes.Add(pid, p);
+                    urlByPid.Add(pid, server_url);
                 }
                 catch (InvalidOperationException) { Console.WriteLine("FileName specified is not valid"); }
                 catch (Win32Exception e) { Console.WriteLine("Couldn't Initialize the Server"); Console.WriteLine(e); }

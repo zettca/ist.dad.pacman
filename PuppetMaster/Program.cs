@@ -110,7 +110,7 @@ namespace PuppetMaster
                     break;
 
                 case "LocalState":
-                    if (parameters.Length.Equals(2))
+                    if (parameters.Length.Equals(3))
                     {
                         new Thread(() => LocalState(parameters[1], parameters[2])).Start();
                     }
@@ -137,7 +137,15 @@ namespace PuppetMaster
 
         private static void LocalState(string pid, string round_id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                IPCS pcs = pcsByPID[pid];
+                pcs.LocalState(pid, round_id);
+            }
+            catch (KeyNotFoundException e)
+            {
+                Console.WriteLine("Unknown PID: {0}", pid);
+            }
         }
 
         private static void InjectDelay(string src_pid, string dst_pid)

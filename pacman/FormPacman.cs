@@ -23,6 +23,8 @@ namespace pacman
         private List<string[]> stdinLines;
         private int numRounds = 0;
 
+        internal List<List<string>> gameDataByRound;
+
         Image
             imgLeft = Properties.Resources.Left,
             imgRight = Properties.Resources.Right,
@@ -37,6 +39,7 @@ namespace pacman
             this.uri = uri;
             // msec not needed yet.
             this.serverEndpoint = serverEndpoint;
+            this.gameDataByRound = new List<List<string>>();
 
             if (lines.Count > 0)
             {
@@ -161,6 +164,8 @@ namespace pacman
         public void UpdateGame(PacmanGameData gameData)
         {
             numRounds++;
+            updateGameDataByRound(gameData);
+
             if (readingFromFile)
             {
                 string[] line = stdinLines[0];
@@ -202,8 +207,22 @@ namespace pacman
             }
         }
 
+        public void updateGameDataByRound(PacmanGameData gameData)
+        {
+            List<string> result = new List<string>();
+
+            gameData.PlayerData.ForEach((player) => result.Add(player.ToString()));
+            gameData.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
+            gameData.WallData.ForEach((wall) => result.Add(wall.ToString()));
+            gameData.FoodData.ForEach((food) => result.Add(food.ToString()));
+
+            gameDataByRound.Add(result);
+        }
+
         public void DrawGame(PacmanGameData gameData)
         {
+            updateGameDataByRound(gameData);
+
             gameData.FoodData.ForEach((food) =>
                 CreatePictureForEntity(food, Properties.Resources.cccc, 100));
 
@@ -308,9 +327,9 @@ namespace pacman
             throw new NotImplementedException();
         }
 
-        public void LocalState()
+        public List<string> LocalState(int round)
         {
-            throw new NotImplementedException();
+            return form.gameDataByRound[round];
         }
     }
 }

@@ -162,7 +162,7 @@ namespace server
             throw new NotImplementedException();
         }
 
-        public void LocalState()
+        public List<string> LocalState(int round)
         {
             throw new NotImplementedException();
         }
