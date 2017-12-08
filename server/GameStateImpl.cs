@@ -60,18 +60,20 @@ namespace server
 
         private void DrawStaticMap()
         {
-            GhostData.Add(new EntityData(new Vec2(200, 120), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
-            GhostData.Add(new EntityData(new Vec2(260, 200), new Vec2(0, 1), new Vec2(SIZE, SIZE)));
-            GhostData.Add(new EntityData(new Vec2(260, 20), new Vec2(-1, -1), new Vec2(SIZE, SIZE)));
+            GhostData.Add(new EntityData("M", new Vec2(301, 72), new Vec2(1, 1), new Vec2(SIZE, SIZE)));
+            GhostData.Add(new EntityData("M", new Vec2(221, 273), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
+            GhostData.Add(new EntityData("M", new Vec2(180, 73), new Vec2(1, 0), new Vec2(SIZE, SIZE)));
 
-            WallData.Add(new EntityData(new Vec2(80, 40), new Vec2(30, 160)));
-            WallData.Add(new EntityData(new Vec2(160, 80), new Vec2(140, 30)));
+            WallData.Add(new EntityData("W", new Vec2(288, 240), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W", new Vec2(128, 240), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W", new Vec2(248, 40), new Vec2(15, 95)));
+            WallData.Add(new EntityData("W", new Vec2(88, 40), new Vec2(15, 95)));
 
-            for (int i = 1; i < 5; i++)
+            for (int i = 0; i < 8; i++)
             {
-                for (int j = 1; j < 5; j++)
+                for (int j = 0; j < 7; j++)
                 {
-                    FoodData.Add(new EntityData(new Vec2(20 * 3 * i, 20 * 3 * j), new Vec2(SIZE / 2, SIZE / 2)));
+                    FoodData.Add(new EntityData("C", new Vec2(8 + 40 * i, 40 + 40 * j), new Vec2(SIZE / 2, SIZE / 2)));
                 }
             }
         }

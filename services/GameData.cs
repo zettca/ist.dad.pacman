@@ -84,11 +84,9 @@ namespace services
         public Vec2 Direction { get => direction; set => direction = value; }
         public Vec2 Size { get => size; set => size = value; }
 
-        public EntityData(Vec2 pos, Vec2 size) : this(pos, new Vec2(0, 0), size) { }
+        public EntityData(string id, Vec2 pos, Vec2 size) : this(id, pos, new Vec2(0, 0), size) { }
 
-        public EntityData(Vec2 pos, Vec2 dir, Vec2 size) : this(pos, dir, size, true) { }
-
-        public EntityData(Vec2 pos, Vec2 dir, Vec2 size, bool alive) : this(" ", pos, dir, size, alive) { }
+        public EntityData(string id, Vec2 pos, Vec2 dir, Vec2 size) : this(id, pos, dir, size, true) { }
 
         public EntityData(string id, Vec2 pos, Vec2 dir, Vec2 size, bool alive)
         {

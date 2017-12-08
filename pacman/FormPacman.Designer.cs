@@ -55,7 +55,7 @@
             // tbMsg
             // 
             this.tbMsg.Enabled = false;
-            this.tbMsg.Location = new System.Drawing.Point(344, 292);
+            this.tbMsg.Location = new System.Drawing.Point(344, 272);
             this.tbMsg.Name = "tbMsg";
             this.tbMsg.Size = new System.Drawing.Size(162, 20);
             this.tbMsg.TabIndex = 143;
@@ -67,7 +67,7 @@
             this.tbChat.Location = new System.Drawing.Point(344, 56);
             this.tbChat.Multiline = true;
             this.tbChat.Name = "tbChat";
-            this.tbChat.Size = new System.Drawing.Size(162, 230);
+            this.tbChat.Size = new System.Drawing.Size(162, 210);
             this.tbChat.TabIndex = 144;
             // 
             // labelForScore
@@ -94,7 +94,7 @@
             this.panelCanvas.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelCanvas.Location = new System.Drawing.Point(12, 12);
             this.panelCanvas.Name = "panelCanvas";
-            this.panelCanvas.Size = new System.Drawing.Size(300, 300);
+            this.panelCanvas.Size = new System.Drawing.Size(320, 280);
             this.panelCanvas.TabIndex = 147;
             // 
             // FormPacman
@@ -102,7 +102,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.ClientSize = new System.Drawing.Size(524, 321);
+            this.ClientSize = new System.Drawing.Size(518, 301);
             this.Controls.Add(this.panelCanvas);
             this.Controls.Add(this.labelForPos);
             this.Controls.Add(this.labelForScore);
