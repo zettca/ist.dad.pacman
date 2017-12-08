@@ -8,40 +8,20 @@ using System.IO;
 
 namespace PuppetMaster
 {
-    class Program
+    class PuppetMaster
     {
-        private static Dictionary<string, IPCS> pcsByUrl = new Dictionary<string, IPCS>();
-        private static Dictionary<string, IPCS> pcsByPID = new Dictionary<string, IPCS>();
-        public static List<string> knownServers = new List<string>();
+        private Dictionary<string, IPCS> pcsByUrl;
+        private Dictionary<string, IPCS> pcsByPID;
+        public List<string> knownServers;
 
-
-        static void Main(string[] args)
+        public PuppetMaster()
         {
-            TcpChannel channel = new TcpChannel(0);
-
-            ChannelServices.RegisterChannel(channel, false);
-
-            if (args.Length > 0)
-            {
-                Console.WriteLine("Reading file...");
-                var lines = File.ReadAllLines(args[0]);
-                foreach (string l in lines)
-                {
-                    parseLine(l);
-                }
-            }
-
-            string line;
-            Console.WriteLine("Reading lines...");
-            Console.Write("> ");
-            while ((line = Console.ReadLine()) != null)
-            {
-                parseLine(line);
-                Console.Write("> ");
-            }
+            pcsByUrl = new Dictionary<string, IPCS>();
+            pcsByPID = new Dictionary<string, IPCS>();
+            knownServers = new List<string>();
         }
 
-        private static void parseLine(string line)
+        public void parseLine(string line)
         {
             string[] parameters = line.Split(' ');
 
@@ -54,8 +34,8 @@ namespace PuppetMaster
                     int len = parameters.Length;
                     if (len.Equals(6) || len.Equals(7))
                     {
-                        new Thread(() => StartClient(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5],
-                            len.Equals(7) ? parameters[6] : null)).Start();
+                        StartClient(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5],
+                            len.Equals(7) ? parameters[6] : null);
                     }
                     else
                         Console.WriteLine("Expected arguments: PID PCS_URL CLIENT_URL MSEC_PER_ROUND NUM_PLAYERS [filename]");
@@ -64,7 +44,7 @@ namespace PuppetMaster
                 case "StartServer":
                     if (parameters.Length.Equals(6))
                     {
-                        new Thread(() => StartServer(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5])).Start();
+                        StartServer(parameters[1], parameters[2], parameters[3], parameters[4], parameters[5]);
                     }
                     else
                         Console.WriteLine("Expected arguments: PID PCS_URL SERVER_URL MSEC_PER_ROUND NUM_PLAYERS");
@@ -131,12 +111,12 @@ namespace PuppetMaster
             }
         }
 
-        private static void Wait(string ms)
+        private void Wait(string ms)
         {
             Thread.Sleep(Int32.Parse(ms));
         }
 
-        private static void LocalState(string pid, string round_id)
+        private void LocalState(string pid, string round_id)
         {
             try
             {
@@ -159,12 +139,12 @@ namespace PuppetMaster
             }
         }
 
-        private static void InjectDelay(string src_pid, string dst_pid)
+        private void InjectDelay(string src_pid, string dst_pid)
         {
             throw new NotImplementedException();
         }
 
-        private static void Unfreeze(string pid)
+        private void Unfreeze(string pid)
         {
             try
             {
@@ -177,7 +157,7 @@ namespace PuppetMaster
             }
         }
 
-        private static void Freeze(string pid)
+        private void Freeze(string pid)
         {
             try
             {
@@ -190,12 +170,12 @@ namespace PuppetMaster
             }
         }
 
-        private static void GlobalStatus()
+        private void GlobalStatus()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("GlobalStatus sent to each process");
         }
 
-        private static void Crash(string pid)
+        private void Crash(string pid)
         {
             try
             {
@@ -209,12 +189,13 @@ namespace PuppetMaster
             }
         }
 
-        private static void StartServer(string pid, string pcs_url, string server_url, string msec, string num_players)
+        private void StartServer(string pid, string pcs_url, string server_url, string msec, string num_players)
         {
             try
             {
                 IPCS pcs = getOrConnectToPCS(pcs_url);
                 pcs.StartServer(pid, server_url, msec, num_players);
+
                 knownServers.Add(server_url);
                 pcsByPID[pid] = pcs;
             }
@@ -222,9 +203,10 @@ namespace PuppetMaster
             {
                 Console.WriteLine("Invalid PCS_URL: {0}", e);
             }
+
         }
 
-        private static void StartClient(string pid, string pcs_url, string client_url, string msec, string num_players, string file_name)
+        private void StartClient(string pid, string pcs_url, string client_url, string msec, string num_players, string file_name)
         {
             try
             {
@@ -246,7 +228,7 @@ namespace PuppetMaster
             }
         }
 
-        private static IPCS getOrConnectToPCS(string pcs_url)
+        private IPCS getOrConnectToPCS(string pcs_url)
         {
             try
             {
@@ -260,6 +242,38 @@ namespace PuppetMaster
                 pcs.Print("Hello there :)");
                 pcsByUrl.Add(pcs_url, pcs);
                 return pcs;
+            }
+        }
+    }
+
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            TcpChannel channel = new TcpChannel(0);
+
+            ChannelServices.RegisterChannel(channel, false);
+
+            PuppetMaster pM = new PuppetMaster();
+
+            if (args.Length > 0)
+            {
+                Console.WriteLine("Reading file...");
+                var lines = File.ReadAllLines(args[0]);
+                foreach (string l in lines)
+                {
+                    pM.parseLine(l);
+                }
+            }
+
+            string line;
+            Console.WriteLine("Reading lines...");
+            Console.Write("> ");
+            while ((line = Console.ReadLine()) != null)
+            {
+                pM.parseLine(line);
+                Console.Write("> ");
             }
         }
     }

@@ -172,7 +172,13 @@ namespace server
 
         public List<string> LocalState(int round)
         {
-            return gameDataByRound[round];
+            if (gameDataByRound.Count <= round)
+            {
+                List<string> result = gameDataByRound[round - 1];
+                Console.WriteLine(result.ToString());
+                return result;
+            }
+            return new List<string>();
         }
     }
 }

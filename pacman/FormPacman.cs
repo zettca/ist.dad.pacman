@@ -340,7 +340,14 @@ namespace pacman
 
         public List<string> LocalState(int round)
         {
-            return form.gameDataByRound[round];
+
+            if (form.gameDataByRound.Count <= round)
+            {
+                List<string> result = form.gameDataByRound[round - 1];
+                Console.WriteLine(result.ToString());
+                return result;
+            }
+            return new List<string>();
         }
     }
 }
