@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using services;
 using System.Threading;
+using System.Collections;
 
 namespace pcs
 {
@@ -77,7 +78,30 @@ namespace pcs
 
         public void GlobalStatus()
         {
-            throw new NotImplementedException();
+            foreach (var obj in slaveByPid)
+            {
+                try
+                {
+                    slaveByPid[obj.Key].GlobalStatus();
+                    Console.WriteLine("Pid : " + obj.Key + " is Alive");
+                }
+                catch(NotImplementedException)
+                {
+                    Console.WriteLine("Pid : " + obj.Key + " is Alive");
+                }
+                catch (System.Net.Sockets.SocketException)
+                {
+                    Console.WriteLine("Pid : " + obj.Key + " is Dead");
+                }
+                catch (KeyNotFoundException)
+                {
+                    Console.WriteLine("Pid : " + obj.Key + " is Dead");
+                }
+                catch (NullReferenceException)
+                {
+                    Console.WriteLine("Pid : " + obj.Key + " is Dead");
+                }
+            }
         }
 
         public void InjectDelay(string src_pid, string dst_pid)

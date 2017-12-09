@@ -41,7 +41,7 @@ namespace server
 
         StateMachine GameInstance { get => gameInstance; }
         List<PlayerAction> PlayerActions { get => playerActions; }
-
+        List<ServiceClient> ClientsCopy;
         List<ServiceClient> Clients { get => clients; set => clients = value; }
         List<Uri> ClientUris { get => Clients.Select((cli) => cli.Uri).ToList(); }
         List<string> ClientNames { get => Clients.Select((cli) => cli.Name).ToList(); }
@@ -135,11 +135,9 @@ namespace server
                 GameInstance.ApplyTick();
                 round += 1;
                 GetPacmanStringResult(round, GameStateData.Copy());
-                Console.WriteLine("Round : " + round);
                 if (_round.Equals(round))
                 {
                     Monitor.PulseAll(mainObject);
-                    Console.WriteLine("Pulse at round : " + round);
                 }
                 new Thread(() => SendGameState(round, GameStateData.Copy())).Start();
 
@@ -175,7 +173,6 @@ namespace server
         private void SendGameStart(int round)
         {
             GamesStuffs((conn) => conn.SendGameStart(round, GameStateData, ClientUris));
-            Console.WriteLine("Sent game start");
         }
 
         private void SendGameEnd()
@@ -223,12 +220,18 @@ namespace server
         public void SendKeys(string userID, bool[] keys)
         {
             PlayerActions.Add(new PlayerAction(userID, keys));
-            Console.WriteLine("INPUT from {0}: {1}", userID, String.Join(" ", keys));
         }
 
         public void GlobalStatus()
         {
-            throw new NotImplementedException();
+            lock (this)
+            {
+
+                Clients.ForEach((cl) =>
+                {
+                    Console.WriteLine(cl.Name + "is Alive");
+                });
+            }
         }
 
         public void InjectDelay()
@@ -261,7 +264,6 @@ namespace server
                 {
                     _round = round;
                     mainObject = this;
-                    Console.WriteLine("Waiting for round : " + round + " on Server");
                     Monitor.Wait(this);
                     return gameDataByRound[round];
                 }
