@@ -27,11 +27,11 @@ namespace server
         private List<ServiceClient> clients;
         private List<PlayerAction> playerActions;
 
-        internal List<List<string>> gameDataByRound = new List<List<string>>();
+        internal List<IGameData> gameDataByRound = new List<IGameData>();
 
         public ServerProgram()
         {
-            clients = new List<ServiceClient>();
+            Clients = new List<ServiceClient>();
             playerActions = new List<PlayerAction>();
 
             new Thread(() => PingLoop()).Start();
@@ -40,10 +40,10 @@ namespace server
         StateMachine GameInstance { get => gameInstance; }
         List<PlayerAction> PlayerActions { get => playerActions; }
 
-        List<ServiceClient> Clients { get => clients; }
-        List<Uri> ClientUris { get => clients.Select((cli) => cli.Uri).ToList(); }
-        List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
-        List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
+        List<ServiceClient> Clients { get => clients; set => clients = value; }
+        List<Uri> ClientUris { get => Clients.Select((cli) => cli.Uri).ToList(); }
+        List<string> ClientNames { get => Clients.Select((cli) => cli.Name).ToList(); }
+        List<IGameClient> ClientConns { get => Clients.Select((cli) => cli.Conn).ToList(); }
 
         IGameData GameStateData { get => gameInstance.CurrentState.Data; }
 
@@ -58,16 +58,9 @@ namespace server
             }
         }
 
-        public void updateGameDataByRound(PacmanGameData gameData)
+        public void UpdateGameDataByRound(IGameData gameData)
         {
-            List<string> result = new List<string>();
-
-            gameData.PlayerData.ForEach((player) => result.Add(player.ToString()));
-            gameData.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
-            gameData.WallData.ForEach((wall) => result.Add(wall.ToString()));
-            gameData.FoodData.ForEach((food) => result.Add(food.ToString()));
-
-            gameDataByRound.Add(result);
+            gameDataByRound.Add(gameData);
         }
 
         private void StartGame(string gameId)
@@ -101,6 +94,7 @@ namespace server
                     deads.Add(i);
                 }
             }
+
             if (deads.Count > 0)
             {
                 foreach (var iDead in deads)
@@ -112,17 +106,20 @@ namespace server
 
         private bool AnyClientAlive()
         {
-            foreach (var client in Clients)
+            lock (this)
             {
-                var player = GameInstance.CurrentState.GetPlayer(client.Name);
-                if (player.Alive) return true;
+                foreach (var client in Clients)
+                {
+                    var player = GameInstance.CurrentState.GetPlayer(client.Name);
+                    if (player.Alive) return true;
+                }
+                return false;
             }
-            return false;
         }
 
         private void GameInstanceThread()
         {
-            updateGameDataByRound(GameStateData as PacmanGameData);
+            UpdateGameDataByRound(GameStateData);
 
             SendGameStart();
 
@@ -132,7 +129,7 @@ namespace server
                 PlayerActions.Clear();
                 GameInstance.ApplyTransitions(actionsToProcess);
                 GameInstance.ApplyTick();
-                updateGameDataByRound(GameStateData as PacmanGameData);
+                UpdateGameDataByRound(GameStateData);
 
                 new Thread(() => SendGameState(GameStateData.Copy())).Start();
 
@@ -227,20 +224,33 @@ namespace server
             throw new NotImplementedException();
         }
 
+        public List<string> GetPacmanStringResult(IGameData gameData)
+        {
+            PacmanGameData data = gameData as PacmanGameData;
+            List<string> result = new List<string>();
+
+            data.PlayerData.ForEach((player) => result.Add(player.ToString()));
+            data.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
+            data.WallData.ForEach((wall) => result.Add(wall.ToString()));
+            data.FoodData.ForEach((food) => result.Add(food.ToString()));
+
+            return result;
+        }
+
         public List<string> LocalState(int round)
         {
             //lock (this)
             {
                 if (round <= gameDataByRound.Count)
                 {
-                    List<string> result = gameDataByRound[round - 1];
+                    List<string> result = GetPacmanStringResult(gameDataByRound[round - 1]);
                     return result;
                 }
                 else
                 {
                     Console.WriteLine("Waiting for round : " + round + " on Server");
                     while (gameDataByRound.Count < round) { }
-                    List<string> result = gameDataByRound[round - 1];
+                    List<string> result = GetPacmanStringResult(gameDataByRound[round - 1]);
                     return result;
                 }
             }
