@@ -163,22 +163,41 @@ namespace pacman
 
         internal void UpdateGame(PacmanGameData gameData)
         {
-            numRounds++;
             updateGameDataByRound(gameData);
 
             if (readingFromFile)
             {
-                string[] line = stdinLines[0];
-                stdinLines.RemoveAt(0);
-                if (Int32.Parse(line?[0]) == numRounds)
+                if (stdinLines.Count > 0)
                 {
-                    server.SendKeys(userID, new bool[] { });
+                    string[] line = stdinLines[0];
+                    stdinLines.RemoveAt(0);
+                    if (Int32.Parse(line?[0]) == numRounds)
+                    {
+                        switch (line?[1])
+                        {
+                            case "LEFT":
+                                server.SendKeys(userID, new bool[] { true, false, false, false });
+                                break;
+                            case "UP":
+                                server.SendKeys(userID, new bool[] { false, true, false, false });
+                                break;
+                            case "RIGHT":
+                                server.SendKeys(userID, new bool[] { false, false, true, false });
+                                break;
+                            case "DOWN":
+                                server.SendKeys(userID, new bool[] { false, false, false, true });
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 }
-                else if (line?[0] == null)
+                else
                 {
                     readingFromFile = false;
                 }
             }
+            numRounds++;
 
             foreach (var player in gameData.PlayerData)
             {

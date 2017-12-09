@@ -50,10 +50,16 @@ namespace pacman
 
             if (args.Length > 4)
             {
-                var linesStr = File.ReadAllLines(args[4]);
-                foreach (string line in linesStr)
+                try
                 {
-                    if (line.Trim() != "") lines.Add(line.Split(' '));
+                    var linesStr = File.ReadAllLines(args[4]);
+                    foreach (string line in linesStr)
+                    {
+                        if (line.Trim() != "") lines.Add(line.Split(','));
+                    }
+                }
+                catch (Exception e) {
+                    MessageBox.Show("Could not read from input file\r\n" + e.Message);
                 }
             }
             else
