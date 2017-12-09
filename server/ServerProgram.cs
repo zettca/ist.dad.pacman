@@ -156,7 +156,6 @@ namespace server
                 {
                     try
                     {
-                        Console.WriteLine(_round);
                         method(Clients[index].Conn);
                     }
                     catch (Exception ex)
