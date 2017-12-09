@@ -132,9 +132,8 @@ namespace PuppetMaster
                         {
                             file.WriteLine(line);
                         //TODO Uncomment before submiting the project !
-                        //Console.WriteLine(line);
+                        Console.WriteLine(line);
                     });
-                        Console.WriteLine(path + " GOOD");
                     }
                 }
             }
@@ -146,7 +145,7 @@ namespace PuppetMaster
 
         private void InjectDelay(string src_pid, string dst_pid)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Not Implemented InjectDelay");
         }
 
         private void Unfreeze(string pid)
@@ -177,7 +176,7 @@ namespace PuppetMaster
 
         private void GlobalStatus()
         {
-            Console.WriteLine("GlobalStatus sent to each process");
+            Console.WriteLine("Not Implemented GlobalStatus");
         }
 
         private void Crash(string pid)
