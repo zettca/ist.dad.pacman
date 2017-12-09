@@ -94,12 +94,14 @@ namespace server
                     deads.Add(i);
                 }
             }
-
-            if (deads.Count > 0)
+            lock (Clients)
             {
-                foreach (var iDead in deads)
+                if (deads.Count > 0)
                 {
-                    Clients.RemoveAt(iDead);
+                    foreach (var iDead in deads)
+                    {
+                        Clients.RemoveAt(iDead);
+                    }
                 }
             }
         }
