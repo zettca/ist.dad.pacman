@@ -17,6 +17,7 @@ namespace pacman
         private PacmanClientService peerService;
         private List<IGameClient> peers = new List<IGameClient>();
         Uri uri;
+        internal bool gameStarted = false;
 
         private bool goup, godown, goleft, goright;
         private bool readingFromFile = false;
@@ -75,8 +76,10 @@ namespace pacman
                     godown = true;
                     break;
                 case Keys.Enter:
-                    tbMsg.Enabled = true;
-                    tbMsg.Focus();
+                    if (gameStarted) {
+                        tbMsg.Enabled = true;
+                        tbMsg.Focus();
+                    }
                     return;
                 default:
                     return;
@@ -336,6 +339,7 @@ namespace pacman
                 Clock.Add(peerUri, 0);
             });
             Clock[endpoint]++;
+            form.gameStarted = true;
         }
 
         public void SendGameState(IGameData data) =>
