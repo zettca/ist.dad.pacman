@@ -66,8 +66,8 @@ namespace services
 
         void Ping();
         void SendGameEnd(IGameData data);
-        void SendGameStart(IGameData data, List<Uri> peerEndpoints);
-        void SendGameState(IGameData data);
+        void SendGameStart(int round, IGameData data, List<Uri> peerEndpoints);
+        void SendGameState(int round, IGameData data);
         void SendMessage(ChatMessage message);
     }
 

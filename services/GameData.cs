@@ -43,8 +43,11 @@ namespace services
         public List<EntityData> FoodData { get => foodData; }
         public List<EntityData> WallData { get => wallData; }
 
+        public int round;
+
         public PacmanGameData()
         {
+            round = 1;
             playerData = new List<PlayerData>();
             ghostData = new List<EntityData>();
             foodData = new List<EntityData>();

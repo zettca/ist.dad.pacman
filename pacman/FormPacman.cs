@@ -304,35 +304,41 @@ namespace pacman
         public string username { get; private set; }
         private Uri endpoint;
         public Dictionary<Uri, int> Clock { get; set; }
-        public List<List<string>> gameDataByRound;
+
+        internal Dictionary<int, List<string>> gameDataByRound;
 
         public Uri Uri => endpoint;
+
+        Thread _mainThread = null;
+
+        int _round = 0;
 
         public PacmanClientService(Uri endpoint, string username)
         {
             this.username = username;
             this.endpoint = endpoint;
 
-            this.gameDataByRound = new List<List<string>>();
+            this.gameDataByRound = new Dictionary<int, List<string>>();
 
             Clock = new Dictionary<Uri, int>();
         }
 
-        public void UpdateGameDataByRound(PacmanGameData gameData)
+        public void GetPacmanStringResult(int round, IGameData gameData)
         {
+            PacmanGameData data = gameData as PacmanGameData;
             List<string> result = new List<string>();
 
-            gameData.PlayerData.ForEach((player) => result.Add(player.ToString()));
-            gameData.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
-            gameData.WallData.ForEach((wall) => result.Add(wall.ToString()));
-            gameData.FoodData.ForEach((food) => result.Add(food.ToString()));
+            data.PlayerData.ForEach((player) => result.Add(player.ToString()));
+            data.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
+            data.WallData.ForEach((wall) => result.Add(wall.ToString()));
+            data.FoodData.ForEach((food) => result.Add(food.ToString()));
 
-            gameDataByRound.Add(result);
+            gameDataByRound.Add(round, result);
         }
 
-        public void SendGameStart(IGameData data, List<Uri> peerEndpoints)
+        public void SendGameStart(int round, IGameData data, List<Uri> peerEndpoints)
         {
-            UpdateGameDataByRound(data as PacmanGameData);
+            GetPacmanStringResult(round, data);
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameData)data);
             peerEndpoints.ForEach((peerUri) =>
             {
@@ -343,9 +349,9 @@ namespace pacman
             form.gameStarted = true;
         }
 
-        public void SendGameState(IGameData data)
+        public void SendGameState(int round, IGameData data)
         {
-            UpdateGameDataByRound(data as PacmanGameData);
+            GetPacmanStringResult(round, data);
             form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
         }
 
@@ -367,19 +373,18 @@ namespace pacman
 
         public List<string> LocalState(int round)
         {
-            //lock (this)
+            lock (this)
             {
-                if (round <= gameDataByRound.Count)
+                if (gameDataByRound.ContainsKey(round))
                 {
-                    List<string> result = gameDataByRound[round-1];
-                    return result;
+                    return gameDataByRound[round];
                 }
                 else
                 {
-                    Console.WriteLine("Waiting for round : " + round + " on Client : " + this.username);
-                    while (gameDataByRound.Count < round) { }
-                    List<string> result = gameDataByRound[round-1];
-                    return result;
+                    _round = round;
+                    _mainThread = Thread.CurrentThread;
+                    while(!gameDataByRound.ContainsKey(round)) { }
+                    return gameDataByRound[round]; ;
                 }
             }
         }

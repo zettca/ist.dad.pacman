@@ -27,13 +27,15 @@ namespace server
         private List<ServiceClient> clients;
         private List<PlayerAction> playerActions;
 
-        internal List<IGameData> gameDataByRound = new List<IGameData>();
+        internal Dictionary<int, List<string>> gameDataByRound;
+        public int _round = 0;
+        ServerProgram mainObject;
 
         public ServerProgram()
         {
             Clients = new List<ServiceClient>();
             playerActions = new List<PlayerAction>();
-
+            gameDataByRound = new Dictionary<int, List<string>>();
             new Thread(() => PingLoop()).Start();
         }
 
@@ -58,14 +60,14 @@ namespace server
             }
         }
 
-        public void UpdateGameDataByRound(IGameData gameData)
-        {
-            gameDataByRound.Add(gameData);
-        }
-
         private void StartGame(string gameId)
         {
             gameInstance = new StateMachine(GetInitialGameState(gameId));
+
+            GetPacmanStringResult(1, GameStateData);
+
+            Monitor.PulseAll(this);
+
             new Thread(() => GameInstanceThread()).Start();
         }
 
@@ -121,9 +123,9 @@ namespace server
 
         private void GameInstanceThread()
         {
-            UpdateGameDataByRound(GameStateData);
+            int round = 1;
 
-            SendGameStart();
+            SendGameStart(round);
 
             while (AnyClientAlive() && (!GameInstance.CurrentState.HasEnded))
             {
@@ -131,9 +133,15 @@ namespace server
                 PlayerActions.Clear();
                 GameInstance.ApplyTransitions(actionsToProcess);
                 GameInstance.ApplyTick();
-                UpdateGameDataByRound(GameStateData);
-
-                new Thread(() => SendGameState(GameStateData.Copy())).Start();
+                round += 1;
+                GetPacmanStringResult(round, GameStateData.Copy());
+                Console.WriteLine("Round : " + round);
+                if (_round.Equals(round))
+                {
+                    Monitor.PulseAll(mainObject);
+                    Console.WriteLine("Pulse at round : " + round);
+                }
+                new Thread(() => SendGameState(round, GameStateData.Copy())).Start();
 
                 Thread.Sleep(Program.msec);
             }
@@ -150,6 +158,7 @@ namespace server
                 {
                     try
                     {
+                        Console.WriteLine(_round);
                         method(Clients[index].Conn);
                     }
                     catch (Exception ex)
@@ -163,9 +172,10 @@ namespace server
             }
         }
 
-        private void SendGameStart()
+        private void SendGameStart(int round)
         {
-            GamesStuffs((conn) => conn.SendGameStart(GameStateData, ClientUris));
+            GamesStuffs((conn) => conn.SendGameStart(round, GameStateData, ClientUris));
+            Console.WriteLine("Sent game start");
         }
 
         private void SendGameEnd()
@@ -173,9 +183,9 @@ namespace server
             GamesStuffs((conn) => conn.SendGameEnd(GameStateData));
         }
 
-        private void SendGameState(IGameData gameData)
+        private void SendGameState(int round, IGameData gameData)
         {
-            GamesStuffs((conn) => conn.SendGameState(gameData));
+            GamesStuffs((conn) => conn.SendGameState(round, gameData));
         }
 
         public bool RegisterPlayer(Uri endpoint, string userID)
@@ -226,7 +236,7 @@ namespace server
             throw new NotImplementedException();
         }
 
-        public List<string> GetPacmanStringResult(IGameData gameData)
+        public void GetPacmanStringResult(int round, IGameData gameData)
         {
             PacmanGameData data = gameData as PacmanGameData;
             List<string> result = new List<string>();
@@ -236,24 +246,24 @@ namespace server
             data.WallData.ForEach((wall) => result.Add(wall.ToString()));
             data.FoodData.ForEach((food) => result.Add(food.ToString()));
 
-            return result;
+            gameDataByRound.Add(round, result);
         }
 
         public List<string> LocalState(int round)
         {
-            //lock (this)
+            lock (this)
             {
-                if (round <= gameDataByRound.Count)
+                if (gameDataByRound.ContainsKey(round))
                 {
-                    List<string> result = GetPacmanStringResult(gameDataByRound[round - 1]);
-                    return result;
+                    return gameDataByRound[round];
                 }
                 else
                 {
+                    _round = round;
+                    mainObject = this;
                     Console.WriteLine("Waiting for round : " + round + " on Server");
-                    while (gameDataByRound.Count < round) { }
-                    List<string> result = GetPacmanStringResult(gameDataByRound[round - 1]);
-                    return result;
+                    Monitor.Wait(this);
+                    return gameDataByRound[round];
                 }
             }
         }
