@@ -61,9 +61,8 @@ namespace server
         ServerGameService()
         {
             stuffs = new ServerStuffs();
-
-
-            this.gameDataByRound = new List<List<string>>();
+            gameDataByRound = new List<List<string>>();
+            new Thread(() => PingLoop()).Start();
         }
 
         private IGameState GetInitialGameState(string gameId)
@@ -95,6 +94,40 @@ namespace server
             new Thread(() => GameInstanceThread()).Start();
         }
 
+        private void PingLoop()
+        {
+            while (true)
+            {
+                PingAll();
+                Thread.Sleep(1000);
+            }
+        }
+
+        private void PingAll()
+        {
+            // pings all clients, removing them if exception is thrown
+            List<int> deads = new List<int>();
+
+            for (int i = 0; i < Clients.Count; i++)
+            {
+                try
+                {
+                    Clients[i].Conn.Ping();
+                }
+                catch
+                {
+                    deads.Add(i);
+                }
+            }
+            if (deads.Count > 0)
+            {
+                foreach (var iDead in deads)
+                {
+                    Clients.RemoveAt(iDead);
+                }
+            }
+        }
+
         public bool RegisterPlayer(Uri endpoint, string userID)
         {
             lock (this)
@@ -120,10 +153,22 @@ namespace server
                 Console.WriteLine("New client ({0}) connected at {1} | {2}",
                     userID, endpoint, clientConnection.Uri);
 
+                PingAll();
                 if (Clients.Count == Program.numPlayers) StartGame(Program.gameName);
 
                 return true;
             }
+        }
+
+        private bool AnyClientAlive()
+        {
+            foreach (var client in Clients)
+            {
+                var player = GameInstance.CurrentState.GetPlayer(client.Name);
+                if (player.Alive) return true;
+            }
+            Console.WriteLine("Clients still alive");
+            return false;
         }
 
         private void GameInstanceThread()
@@ -132,7 +177,7 @@ namespace server
 
             GameStart();
 
-            while (!GameInstance.CurrentState.HasEnded)
+            while (AnyClientAlive() && (!GameInstance.CurrentState.HasEnded))
             {
                 List<PlayerAction> actionsToProcess = new List<PlayerAction>(PlayerActions);
                 PlayerActions.Clear();
@@ -153,28 +198,19 @@ namespace server
         {
             lock (this)
             {
-                List<int> dead = new List<int>();
-
                 for (int index = 0; index < Clients.Count; index++)
                 {
                     try
                     {
-                        new Thread(() => method(Clients[index].Conn)).Start();
+                        method(Clients[index].Conn);
                     }
-                    catch (ObjectDisposedException)
+                    catch (Exception ex)
                     {
-                        dead.Add(index);
+                        if (ex is ObjectDisposedException || ex is System.Net.Sockets.SocketException)
+                        {
+                            PingAll();
+                        }
                     }
-                    catch (System.Net.Sockets.SocketException)
-                    {
-                        dead.Add(index);
-                    }
-                }
-
-                if (dead.Count > 0)
-                {
-                    dead.ForEach((cl) => Clients.RemoveAt(cl));
-                    
                 }
             }
         }

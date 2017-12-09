@@ -383,5 +383,10 @@ namespace pacman
                 }
             }
         }
+
+        public void Ping()
+        {
+            return;
+        }
     }
 }

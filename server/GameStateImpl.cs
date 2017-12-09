@@ -40,7 +40,7 @@ namespace server
         public List<EntityData> FoodData { get => gameData.FoodData; }
         public List<EntityData> WallData { get => gameData.WallData; }
 
-        public bool HasEnded => !AnyPlayerAlive(PlayerData) || !AnyEntityAlive(FoodData);
+        public bool HasEnded => !AnyEntityAlive(FoodData);
 
 
         public PacmanGameState(List<string> playerIDs, int numPlayers, int windowX, int windowY)

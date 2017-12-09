@@ -40,6 +40,7 @@ namespace services
         bool HasEnded { get; }
         IGameData Data { get; }
 
+        PlayerData GetPlayer(string pid);
         IGameState ApplyTick();
         IGameState ApplyAction(PlayerAction action);
     }
@@ -63,6 +64,7 @@ namespace services
     {
         Uri Uri { get; }
 
+        void Ping();
         void SendGameEnd(IGameData data);
         void SendGameStart(IGameData data, List<Uri> peerEndpoints);
         void SendGameState(IGameData data);
