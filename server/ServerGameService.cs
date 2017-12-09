@@ -28,25 +28,39 @@ namespace server
         }
     }
 
-    class ServerGameService : MarshalByRefObject, IGameServer, ISlaveControl
+    class ServerStuffs
     {
-        List<ServiceClient> clients;
-        List<ChatMessage> messages;
-        List<PlayerAction> playerActions;
-        StateMachine gameInstance;
+        internal List<ServiceClient> clients;
+        internal List<ChatMessage> messages;
+        internal List<PlayerAction> playerActions;
+        internal StateMachine gameInstance;
 
-        internal List<List<string>> gameDataByRound;
-
-        List<Uri> ClientUris { get => clients.Select((cli) => cli.Uri).ToList(); }
-        List<string> ClientNames { get => clients.Select((cli) => cli.Name).ToList(); }
-        List<IGameClient> ClientConns { get => clients.Select((cli) => cli.Conn).ToList(); }
-        IGameData GameData { get => gameInstance.CurrentState.Data; }
-
-        ServerGameService()
+        public ServerStuffs()
         {
             clients = new List<ServiceClient>();
             messages = new List<ChatMessage>();
             playerActions = new List<PlayerAction>();
+        }
+    }
+
+    class ServerGameService : MarshalByRefObject, IGameServer, ISlaveControl
+    {
+        private ServerStuffs stuffs;
+
+        internal List<List<string>> gameDataByRound;
+
+        List<ServiceClient> Clients { get => stuffs.clients; }
+        List<PlayerAction> PlayerActions { get => stuffs.playerActions; }
+        StateMachine GameInstance { get => stuffs.gameInstance; }
+        List<Uri> ClientUris { get => stuffs.clients.Select((cli) => cli.Uri).ToList(); }
+        List<string> ClientNames { get => stuffs.clients.Select((cli) => cli.Name).ToList(); }
+        List<IGameClient> ClientConns { get => stuffs.clients.Select((cli) => cli.Conn).ToList(); }
+        IGameData GameData { get => stuffs.gameInstance.CurrentState.Data; }
+
+        ServerGameService()
+        {
+            stuffs = new ServerStuffs();
+
 
             this.gameDataByRound = new List<List<string>>();
         }
@@ -77,7 +91,7 @@ namespace server
         private void StartGame(string gameId)
         {
             PacmanGameState gameState = GetInitialGameState(gameId) as PacmanGameState;
-            gameInstance = new StateMachine(gameState);
+            stuffs.gameInstance = new StateMachine(gameState);
             updateGameDataByRound(gameState.Data as PacmanGameData);
             new Thread(() => GameInstanceThread()).Start();
         }
@@ -85,15 +99,14 @@ namespace server
         public bool RegisterPlayer(Uri endpoint, string userID)
         {
             lock (this)
-
             {
-
                 Console.WriteLine("Trying to register new player at " + endpoint);
-                if (clients.Count >= Program.numPlayers || clients.Exists((cli) => cli.Name == userID))
+                if (Clients.Count >= Program.numPlayers || Clients.Exists((cli) => cli.Name == userID))
                     return false;
 
                 IGameClient clientConnection = (IGameClient)Activator.GetObject(
                     typeof(IGameClient), endpoint.AbsoluteUri);
+
 
                 Console.WriteLine("AbsoluteUri: " + endpoint.AbsoluteUri);
 
@@ -103,12 +116,12 @@ namespace server
                     return false;
                 }
 
-                clients.Add(new ServiceClient(endpoint, userID, clientConnection));
+                Clients.Add(new ServiceClient(endpoint, userID, clientConnection));
 
                 Console.WriteLine("New client ({0}) connected at {1} | {2}",
                     userID, endpoint, clientConnection.Uri);
 
-                if (clients.Count == Program.numPlayers) StartGame(Program.gameName);
+                if (Clients.Count == Program.numPlayers) StartGame(Program.gameName);
 
                 return true;
             }
@@ -116,43 +129,43 @@ namespace server
 
         private void GameInstanceThread()
         {
-            new Thread(() => GameStart()).Start();
+            GameStart();
 
-            while (!gameInstance.CurrentState.HasEnded)
+            while (!GameInstance.CurrentState.HasEnded)
             {
-                List<PlayerAction> actionsToProcess = new List<PlayerAction>(playerActions);
-                playerActions.Clear();
-                gameInstance.ApplyTransitions(actionsToProcess);
-                gameInstance.ApplyTick();
+                List<PlayerAction> actionsToProcess = new List<PlayerAction>(PlayerActions);
+                PlayerActions.Clear();
+                GameInstance.ApplyTransitions(actionsToProcess);
+                GameInstance.ApplyTick();
                 updateGameDataByRound(GameData as PacmanGameData);
 
-                new Thread(() => SendGameState()).Start();
+                SendGameState();
                 Thread.Sleep(Program.msec);
             }
 
             Console.WriteLine("Game has ended!");
-            new Thread(() => GameEnd()).Start();
+            GameEnd();
         }
 
         private void GamesStuffs(Action<IGameClient> method)
         {
             lock (this)
             {
-                clients.ForEach((client) =>
+                Clients.ForEach((client) =>
                 {
                     try
                     {
                         if (client.State == ClientState.ALIVE)
                         {
-                            method(client.Conn);
-
+                            new Thread(() => method(client.Conn)).Start();
                         }
                     }
                     catch (ObjectDisposedException)
                     {
                         Console.WriteLine("Client {0} dropped", client.Name);
                         client.State = ClientState.DEAD;
-                        // clients.Remove(client);
+                        client.Conn = null;
+                        Clients.Remove(client);
                     }
                 });
             }
@@ -175,7 +188,7 @@ namespace server
 
         public void SendKeys(string pid, bool[] keys)
         {
-            playerActions.Add(new PlayerAction(pid, keys));
+            PlayerActions.Add(new PlayerAction(pid, keys));
             Console.WriteLine("INPUT from {0}: {1}", pid, String.Join(" ", keys));
         }
 
