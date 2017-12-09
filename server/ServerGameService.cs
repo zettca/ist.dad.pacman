@@ -1,6 +1,7 @@
 ﻿using services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -90,9 +91,7 @@ namespace server
 
         private void StartGame(string gameId)
         {
-            PacmanGameState gameState = GetInitialGameState(gameId) as PacmanGameState;
-            stuffs.gameInstance = new StateMachine(gameState);
-            updateGameDataByRound(gameState.Data as PacmanGameData);
+            stuffs.gameInstance = new StateMachine(GetInitialGameState(gameId));
             new Thread(() => GameInstanceThread()).Start();
         }
 
@@ -129,6 +128,8 @@ namespace server
 
         private void GameInstanceThread()
         {
+            updateGameDataByRound(GameData as PacmanGameData);
+
             GameStart();
 
             while (!GameInstance.CurrentState.HasEnded)
@@ -140,6 +141,7 @@ namespace server
                 updateGameDataByRound(GameData as PacmanGameData);
 
                 SendGameState();
+
                 Thread.Sleep(Program.msec);
             }
 
@@ -151,23 +153,29 @@ namespace server
         {
             lock (this)
             {
-                Clients.ForEach((client) =>
+                List<int> dead = new List<int>();
+
+                for (int index = 0; index < Clients.Count; index++)
                 {
                     try
                     {
-                        if (client.State == ClientState.ALIVE)
-                        {
-                            new Thread(() => method(client.Conn)).Start();
-                        }
+                        new Thread(() => method(Clients[index].Conn)).Start();
                     }
                     catch (ObjectDisposedException)
                     {
-                        Console.WriteLine("Client {0} dropped", client.Name);
-                        client.State = ClientState.DEAD;
-                        client.Conn = null;
-                        Clients.Remove(client);
+                        dead.Add(index);
                     }
-                });
+                    catch (System.Net.Sockets.SocketException)
+                    {
+                        dead.Add(index);
+                    }
+                }
+
+                if (dead.Count > 0)
+                {
+                    dead.ForEach((cl) => Clients.RemoveAt(cl));
+                    
+                }
             }
         }
 
@@ -204,7 +212,7 @@ namespace server
 
         public List<string> LocalState(int round)
         {
-            lock (this)
+            //lock (this)
             {
                 if (round <= gameDataByRound.Count)
                 {
@@ -214,8 +222,7 @@ namespace server
                 else
                 {
                     Console.WriteLine("Waiting for round : " + round + " on Server");
-                    while (gameDataByRound.Count < round)
-                        Console.WriteLine(gameDataByRound.Count);
+                    while (gameDataByRound.Count < round) { }
                     List<string> result = gameDataByRound[round - 1];
                     return result;
                 }

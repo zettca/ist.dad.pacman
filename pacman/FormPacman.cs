@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.Remoting;
 using System.Threading;
@@ -24,8 +25,6 @@ namespace pacman
         private List<string[]> stdinLines;
         private int numRounds = 0;
 
-        internal List<List<string>> gameDataByRound;
-
         Image
             imgLeft = Properties.Resources.Left,
             imgRight = Properties.Resources.Right,
@@ -40,7 +39,6 @@ namespace pacman
             this.uri = uri;
             // msec not needed yet.
             this.serverEndpoint = serverEndpoint;
-            this.gameDataByRound = new List<List<string>>();
 
             if (lines.Count > 0)
             {
@@ -166,7 +164,7 @@ namespace pacman
 
         internal void UpdateGame(PacmanGameData gameData)
         {
-            updateGameDataByRound(gameData);
+            numRounds++;
 
             if (readingFromFile)
             {
@@ -229,22 +227,8 @@ namespace pacman
             }
         }
 
-        public void updateGameDataByRound(PacmanGameData gameData)
-        {
-            List<string> result = new List<string>();
-
-            gameData.PlayerData.ForEach((player) => result.Add(player.ToString()));
-            gameData.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
-            gameData.WallData.ForEach((wall) => result.Add(wall.ToString()));
-            gameData.FoodData.ForEach((food) => result.Add(food.ToString()));
-
-            gameDataByRound.Add(result);
-        }
-
         internal void DrawGame(PacmanGameData gameData)
         {
-            updateGameDataByRound(gameData);
-
             gameData.FoodData.ForEach((food) =>
                 CreatePictureForEntity(food, Properties.Resources.cccc, 100));
 
@@ -313,12 +297,14 @@ namespace pacman
     delegate void GameHandler(PacmanGameData data);
     delegate void MessageHandler(ChatMessage msg);
 
+
     public class PacmanClientService : MarshalByRefObject, IGameClient, ISlaveControl
     {
         public FormPacman form;
         public string username { get; private set; }
         private Uri endpoint;
         public Dictionary<Uri, int> Clock { get; set; }
+        public List<List<string>> gameDataByRound;
 
         public Uri Uri => endpoint;
 
@@ -327,11 +313,26 @@ namespace pacman
             this.username = username;
             this.endpoint = endpoint;
 
+            this.gameDataByRound = new List<List<string>>();
+
             Clock = new Dictionary<Uri, int>();
+        }
+
+        public void UpdateGameDataByRound(PacmanGameData gameData)
+        {
+            List<string> result = new List<string>();
+
+            gameData.PlayerData.ForEach((player) => result.Add(player.ToString()));
+            gameData.GhostData.ForEach((ghost) => result.Add(ghost.ToString()));
+            gameData.WallData.ForEach((wall) => result.Add(wall.ToString()));
+            gameData.FoodData.ForEach((food) => result.Add(food.ToString()));
+
+            gameDataByRound.Add(result);
         }
 
         public void SendGameStart(IGameData data, List<Uri> peerEndpoints)
         {
+            UpdateGameDataByRound(data as PacmanGameData);
             form.Invoke(new GameHandler(form.DrawGame), (PacmanGameData)data);
             peerEndpoints.ForEach((peerUri) =>
             {
@@ -342,8 +343,11 @@ namespace pacman
             form.gameStarted = true;
         }
 
-        public void SendGameState(IGameData data) =>
-                form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
+        public void SendGameState(IGameData data)
+        {
+            UpdateGameDataByRound(data as PacmanGameData);
+            form.Invoke(new GameHandler(form.UpdateGame), (PacmanGameData)data);
+        }
 
         public void SendMessage(ChatMessage msg) =>
             form.Invoke(new MessageHandler(form.AddMessage), msg);
@@ -363,19 +367,18 @@ namespace pacman
 
         public List<string> LocalState(int round)
         {
-            lock (this)
+            //lock (this)
             {
-                if (round <= form.gameDataByRound.Count)
+                if (round <= gameDataByRound.Count)
                 {
-                    List<string> result = form.gameDataByRound[round - 1];
+                    List<string> result = gameDataByRound[round-1];
                     return result;
                 }
                 else
                 {
                     Console.WriteLine("Waiting for round : " + round + " on Client : " + this.username);
-                    while (form.gameDataByRound.Count < round)
-                        Console.WriteLine(form.gameDataByRound.Count);
-                    List<string> result = form.gameDataByRound[round - 1];
+                    while (gameDataByRound.Count < round) { }
+                    List<string> result = gameDataByRound[round-1];
                     return result;
                 }
             }

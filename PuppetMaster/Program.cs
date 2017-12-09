@@ -122,21 +122,20 @@ namespace PuppetMaster
             {
                 IPCS pcs = pcsByPID[pid];
                 List<String> result = pcs.LocalState(pid, round_id);
-                string path = "..\\..\\LocalState-" + pid + '-' + round_id;
-                using (StreamWriter file = new StreamWriter(@path, false))
+
+                if (result != null)
                 {
-                    if (result != null)
+                    string path = "..\\..\\LocalState-" + pid + '-' + round_id;
+                    using (StreamWriter file = new StreamWriter(@path, false))
                     {
                         result.ForEach((line) =>
                         {
                             file.WriteLine(line);
                         //TODO Uncomment before submiting the project !
                         //Console.WriteLine(line);
-                        });
+                    });
                         Console.WriteLine(path + " GOOD");
                     }
-                    else
-                        Console.WriteLine(path + " BAD");
                 }
             }
             catch (KeyNotFoundException e)
@@ -201,7 +200,6 @@ namespace PuppetMaster
             {
                 IPCS pcs = getOrConnectToPCS(pcs_url);
                 pcs.StartServer(pid, server_url, msec, num_players);
-
                 knownServers.Add(server_url);
                 pcsByPID[pid] = pcs;
             }
