@@ -175,7 +175,7 @@ namespace server
         {
             updateGameDataByRound(GameData as PacmanGameData);
 
-            GameStart();
+            SendGameStart();
 
             while (AnyClientAlive() && (!GameInstance.CurrentState.HasEnded))
             {
@@ -185,13 +185,13 @@ namespace server
                 GameInstance.ApplyTick();
                 updateGameDataByRound(GameData as PacmanGameData);
 
-                SendGameState();
+                new Thread(() => SendGameState(GameData.Copy())).Start();
 
                 Thread.Sleep(Program.msec);
             }
 
             Console.WriteLine("Game has ended!");
-            GameEnd();
+            SendGameEnd();
         }
 
         private void GamesStuffs(Action<IGameClient> method)
@@ -215,19 +215,19 @@ namespace server
             }
         }
 
-        private void GameStart()
+        private void SendGameStart()
         {
             GamesStuffs((conn) => conn.SendGameStart(GameData, ClientUris));
         }
 
-        private void GameEnd()
+        private void SendGameEnd()
         {
             GamesStuffs((conn) => conn.SendGameEnd(GameData));
         }
 
-        private void SendGameState()
+        private void SendGameState(IGameData gameData)
         {
-            GamesStuffs((conn) => conn.SendGameState(GameData));
+            GamesStuffs((conn) => conn.SendGameState(gameData));
         }
 
         public void SendKeys(string pid, bool[] keys)
